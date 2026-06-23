@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Turborepo
+.turbo/
+
+# Tests / coverage
+coverage/
+
+# Secrets & env (.env.example остаётся в репо)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Expo / React Native (mobile)
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Vite (админки)
+.vite/
+
+# Prisma (генерируемый клиент)
+apps/backend/src/prisma/generated/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
