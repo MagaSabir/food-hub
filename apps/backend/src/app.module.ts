@@ -14,7 +14,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
       cache: true,
       load: configLoaders,
       validationSchema: envValidationSchema,
-      envFilePath: [`env/.env.${NODE_ENV}`, 'env/,env'],
+      envFilePath: [`env/.env.${NODE_ENV}`, 'env/.env'],
     }),
   ],
   controllers: [AppController],

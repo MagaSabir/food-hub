@@ -13,3 +13,8 @@ export interface EnvironmentConfig {
   isTest: boolean;
   isProduction: boolean;
 }
+
+export interface SwaggerConfig {
+  enabled: boolean;
+  path: string;
+}
