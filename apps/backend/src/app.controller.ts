@@ -10,4 +10,9 @@ export class AppController {
     console.log('fl');
     return this.appService.getInfo();
   }
+
+  @Get('user')
+  async getUser() {
+    return this.appService.getUser();
+  }
 }

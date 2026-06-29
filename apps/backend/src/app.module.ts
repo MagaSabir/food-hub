@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { ConfigModule } from '@nestjs/config';
 import { configLoaders } from './config';
 import { envValidationSchema } from './config/env.validation';
+import { PrismaModule } from './prisma/prisma.module';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -16,6 +17,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
       validationSchema: envValidationSchema,
       envFilePath: [`env/.env.${NODE_ENV}`, 'env/.env'],
     }),
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

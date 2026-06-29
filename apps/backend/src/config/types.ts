@@ -18,3 +18,8 @@ export interface SwaggerConfig {
   enabled: boolean;
   path: string;
 }
+
+export interface DatabaseConfig {
+  url: string;
+  logQueries: boolean;
+}
