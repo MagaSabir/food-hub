@@ -7,7 +7,6 @@ export class AppController {
 
   @Get()
   getInfo(): { name: string; status: string } {
-    console.log('fl');
     return this.appService.getInfo();
   }
 

@@ -5,6 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { configLoaders } from './config';
 import { envValidationSchema } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -20,6 +22,9 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
     PrismaModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+  ],
 })
 export class AppModule {}

@@ -23,6 +23,7 @@
     "prisma:reset": "cross-env NODE_ENV=development prisma migrate reset"
   },
   "dependencies": {
+    "@foodhubme/shared": "workspace:*",
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.27",
