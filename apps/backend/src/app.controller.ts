@@ -9,9 +9,4 @@ export class AppController {
   getInfo(): { name: string; status: string } {
     return this.appService.getInfo();
   }
-
-  @Get('user')
-  async getUser() {
-    return this.appService.getUser();
-  }
 }
