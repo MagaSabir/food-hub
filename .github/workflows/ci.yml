@@ -1,0 +1,49 @@
+name: CI
+
+# Гоняем качество на каждый PR в main и на пуш в main (main всегда зелёная).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Новый пуш в ту же ветку/PR отменяет предыдущий прогон — не жжём минуты зря.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: lint + types + tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # pnpm ставим ДО setup-node — тогда setup-node умеет кешировать pnpm-store.
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.6.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # --frozen-lockfile: CI не правит pnpm-lock.yaml; расхождение = падение.
+      # postinstall в backend вызовет `prisma generate` — БД для этого НЕ нужна.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # turbo сам строит зависимости (^build) и кеширует по пакетам.
+      - name: Lint
+        run: pnpm turbo run lint
+
+      - name: Build (типы + сборка)
+        run: pnpm turbo run build
+
+      - name: Test
+        run: pnpm turbo run test
