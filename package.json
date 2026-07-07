@@ -19,6 +19,11 @@
     "turbo": "^2.1.0",
     "typescript": "^5.6.0"
   },
+  "pnpm": {
+    "overrides": {
+      "jest-mock": "30.4.1"
+    }
+  },
   "keywords": [],
   "author": "Magomed Sabirov <magsabir95@gmail.com>",
   "license": "UNLICENSED"
