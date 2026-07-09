@@ -6,7 +6,7 @@ export function HomeScreen() {
       <Text className="text-3xl font-bold text-neutral-900 dark:text-white">
         FoodHub
       </Text>
-      <Text className="mt-2 text-center text-neutral-500 dark:text-neutral-400">
+      <Text className="mt-2 text-center text-neutral-500 dark:text-neutral-100">
         Каркас готов. Экраны — со следующего этапа.
       </Text>
       <Button title="Press me" />
