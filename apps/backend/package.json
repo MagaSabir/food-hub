@@ -28,6 +28,7 @@
     "@nestjs/common": "^11.1.27",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.27",
+    "@nestjs/cqrs": "^11.0.3",
     "@nestjs/platform-express": "^11.1.27",
     "@nestjs/swagger": "^11.4.4",
     "@prisma/adapter-pg": "^7.8.0",
@@ -63,3 +64,4 @@
     "typescript-eslint": "^8.62.0"
   }
 }
+
