@@ -4,12 +4,20 @@ import 'react-native-reanimated';
 
 import '../global.css';
 import { AppProviders } from '@/providers/app-providers';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   return (
-    <AppProviders>
-      <Stack />
-      <StatusBar style="auto" />
-    </AppProviders>
+    <SafeAreaProvider>
+      <AppProviders>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: '#FAFAFB' },
+          }}
+        />
+        <StatusBar style="dark" />
+      </AppProviders>
+    </SafeAreaProvider>
   );
 }
