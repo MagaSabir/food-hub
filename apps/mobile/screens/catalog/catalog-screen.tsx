@@ -15,6 +15,7 @@ import { useScrollToTop } from '@react-navigation/native';
 import { CuisineChips } from '@/screens/catalog/ui/cuisine-chips';
 import { SectionHeader } from '@/screens/catalog/ui/section-header';
 import { RestaurantCard } from '@/entities/restaurant';
+import { router } from 'expo-router';
 
 export function CatalogScreen() {
   const scrollRef = useRef<ScrollView>(null);
@@ -37,8 +38,17 @@ export function CatalogScreen() {
         <CuisineChips />
         <SectionHeader title="Рядом с вами" onSeeAll={() => {}} />
         <View className="gap-3 px-5 pt-2">
-          {MOCK_RESTAURANTS.map((restaurant) => (
-            <RestaurantCard key={restaurant.name} {...restaurant} />
+          {MOCK_RESTAURANTS.map(({ slug, ...restaurant }) => (
+            <RestaurantCard
+              key={slug}
+              {...restaurant}
+              onPress={() =>
+                router.push({
+                  pathname: '/restaurant/[slug]',
+                  params: { slug },
+                })
+              }
+            />
           ))}
         </View>
       </ScrollView>
