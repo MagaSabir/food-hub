@@ -8,8 +8,9 @@ export const MOCK_HAS_UNREAD = true;
 
 const DEMO_LOGO = require('@/assets/images/944341_ODUJEJ1.svg');
 
-export const MOCK_RESTAURANTS: RestaurantCardProps[] = [
+export const MOCK_RESTAURANTS: (RestaurantCardProps & { slug: string })[] = [
   {
+    slug: 'bb-burgers',
     name: 'BB Burgers',
     cuisine: 'Бургеры • Американская',
     rating: 4.8,
@@ -20,9 +21,10 @@ export const MOCK_RESTAURANTS: RestaurantCardProps[] = [
     isFastDelivery: true,
     imageUrl:
       'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&q=80',
-    // logoUrl: DEMO_LOGO,
+    logoUrl: DEMO_LOGO,
   },
   {
+    slug: 'pizza-uno',
     name: 'Pizza Uno',
     cuisine: 'Пицца • Итальянская',
     rating: 4.7,
@@ -36,6 +38,7 @@ export const MOCK_RESTAURANTS: RestaurantCardProps[] = [
     logoUrl: DEMO_LOGO,
   },
   {
+    slug: 'tokyo-sushi',
     name: 'Tokyo Sushi',
     cuisine: 'Суши • Японская',
     rating: 4.9,
@@ -48,6 +51,7 @@ export const MOCK_RESTAURANTS: RestaurantCardProps[] = [
     logoUrl: DEMO_LOGO,
   },
   {
+    slug: 'sakura',
     name: 'Sakura',
     cuisine: 'Суши • Японская',
     rating: 4.9,
@@ -59,6 +63,7 @@ export const MOCK_RESTAURANTS: RestaurantCardProps[] = [
     logoUrl: DEMO_LOGO,
   },
   {
+    slug: 'steak-house',
     name: 'Steak House',
     cuisine: 'Стейки • Гриль',
     rating: 4.6,
