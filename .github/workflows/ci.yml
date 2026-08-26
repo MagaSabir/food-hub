@@ -1,11 +1,11 @@
 name: CI
 
-# Гоняем качество на PR/пуш в dev (интеграция) и main (прод) — обе всегда зелёные.
+# Гоняем качество на PR/пуш в main (прод)
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main]
   push:
-    branches: [main, dev]
+    branches: [main]
 
 # Новый пуш в ту же ветку/PR отменяет предыдущий прогон — не жжём минуты зря.
 concurrency:
