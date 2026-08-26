@@ -1,26 +1,15 @@
 import 'reflect-metadata';
-import { Logger } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { ConfigService } from '@nestjs/config';
-import { AppConfig, EnvironmentConfig } from './config';
-import { applyAppInitialization } from './setup/app-initialization';
+import { NestFactory } from '@nestjs/core';
+import { Logger } from '@nestjs/common';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const config = app.get(ConfigService);
 
-  const appCfg = config.getOrThrow<AppConfig>('app');
-  const env = config.getOrThrow<EnvironmentConfig>('environment');
+  await app.listen(3000);
 
-  app.set('trust proxy', true);
-  app.enableShutdownHooks();
-
-  applyAppInitialization(app);
-  await app.listen(appCfg.port);
-  Logger.log(
-    `Backend [${env.nodeEnv}] -> http://localhost:${appCfg.port}/${appCfg.globalPrefix}`,
-  );
+  Logger.log(`Food-Hub backend -> http://localhost:3000`, 'Bootstrap');
 }
+
 void bootstrap();
