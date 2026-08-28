@@ -3,3 +3,17 @@ export interface AppConfig {
   port: number;
   globalPrefix: string;
 }
+
+export type NodeEnv = 'development' | 'production' | 'test';
+
+export interface EnvironmentConfig {
+  nodeEnv: NodeEnv;
+  isProduction: boolean;
+  isDevelopment: boolean;
+  isTest: boolean;
+}
+
+export interface SwaggerConfig {
+  enabled: boolean;
+  path: string;
+}
