@@ -6,8 +6,36 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id   Int    @id @default(autoincrement())
-  name String
-  age  Int
+model City {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("cities")
+}
+
+model Restaurant {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  logoUrl     String? @map("logo_url")
+
+  cuisineTypes  String[] @map("cuisine_types")
+  slug          String   @unique
+  showInCatalog Boolean  @default(true) @map("show_in_catalog")
+
+  ratingFood     Decimal @default(0) @map("rating_food") @db.Decimal(3, 2)
+  ratingDelivery Decimal @default(0) @map("rating_delivery") @db.Decimal(3, 2)
+  reviewsCount   Int     @default(0) @map("reviews_count")
+
+  commissionPercent Decimal @default(0) @map("commission_percent") @db.Decimal(5, 2)
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("restaurants")
 }

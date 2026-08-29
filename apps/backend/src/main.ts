@@ -14,7 +14,7 @@ async function bootstrap() {
   const appCfg = config.getOrThrow<AppConfig>('app');
   const env = config.getOrThrow<EnvironmentConfig>('environment');
 
-  app.set('trust proxy', true);
+  app.set('trust proxy', 1);
   app.enableShutdownHooks();
 
   applyAppInitialization(app);

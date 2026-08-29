@@ -15,4 +15,10 @@ export const envValidationSchema = Joi.object().keys({
   // - Swagger -
   SWAGGER_ENABLED: bool(),
   SWAGGER_PATH: Joi.string().default('api/docs'),
+
+  // - Database -
+  DATABASE_URL: Joi.string()
+    .uri({ scheme: ['postgres', 'postgresql'] })
+    .required(),
+  LOG_QUERIES: bool().default(false),
 });
