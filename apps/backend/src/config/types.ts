@@ -2,6 +2,7 @@ export interface AppConfig {
   name: string;
   port: number;
   globalPrefix: string;
+  sendInternalServerErrorDetails: boolean;
 }
 
 export type NodeEnv = 'development' | 'production' | 'test';
