@@ -13,6 +13,7 @@ model City {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  branches  Branch[]
 
   @@map("cities")
 }
@@ -36,6 +37,49 @@ model Restaurant {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  branches  Branch[]
 
   @@map("restaurants")
+}
+
+model Branch {
+  id           String  @id @default(uuid()) @db.Uuid
+  restaurantId String  @map("restaurant_id") @db.Uuid
+  cityId       String  @map("city_id") @db.Uuid
+  name         String?
+  address      String
+  phone        String
+
+  // координаты
+  latitude  Float?
+  longitude Float?
+
+  workingHours Json    @map("working_hours")
+  hasDelivery  Boolean @default(true) @map("has_delivery")
+  hasDineIn    Boolean @default(true) @map("has_dine_in")
+  hasPickup    Boolean @default(true) @map("has_pickup")
+
+  minOrderAmount Decimal @default(0) @map("min_order_amount") @db.Decimal(10, 2)
+
+  // доставка
+  deliveryBaseFee          Decimal  @default(0) @map("delivery_base_fee") @db.Decimal(10, 2)
+  deliveryIncludedRadiusKm Decimal  @default(0) @map("delivery_included_radius_km") @db.Decimal(5, 2)
+  deliveryPerKm            Decimal  @default(0) @map("delivery_per_km") @db.Decimal(10, 2)
+  deliveryMaxRadiusKm      Decimal? @map("delivery_max_radius_km") @db.Decimal(5, 2)
+  freeDeliveryMinOrder     Decimal? @map("free_delivery_min_order") @db.Decimal(10, 2)
+
+  freeDeliveryRadiusKm Decimal? @map("free_delivery_radius_km") @db.Decimal(5, 2)
+
+  // состояние
+  acceptingOrders Boolean  @default(true) @map("accepting_orders")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  city       City       @relation(fields: [cityId], references: [id], onDelete: Restrict)
+
+  @@unique([restaurantId, name])
+  @@index([cityId])
+  @@map("branches")
 }

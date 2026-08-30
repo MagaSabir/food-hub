@@ -7,6 +7,7 @@ import { envValidationSchema } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { APP_FILTER } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { RestaurantsModule } from './restaurants/restaurants.module';
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
@@ -19,6 +20,8 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
       validationSchema: envValidationSchema,
       envFilePath: [`env/.env.${NODE_ENV}`, 'env/.env'],
     }),
+    RestaurantsModule,
+
     PrismaModule,
   ],
   controllers: [AppController],
