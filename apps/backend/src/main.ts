@@ -5,7 +5,7 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig, EnvironmentConfig } from './config';
-import { applyAppInitialization } from './setup/app-initialization';
+import { applyAppInitialization } from './setup/apply-app-initialization';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);

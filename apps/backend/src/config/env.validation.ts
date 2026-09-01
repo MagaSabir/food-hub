@@ -8,7 +8,7 @@ export const envValidationSchema = Joi.object().keys({
     .valid('development', 'test', 'production')
     .default('development'),
   APP_NAME: Joi.string().default('foodhubme'),
-  PORT: Joi.number().default(3000),
+  PORT: Joi.number().port().default(3000),
   GLOBAL_PREFIX: Joi.string().default('api'),
   SEND_INTERNAL_SERVER_ERROR_DETAILS: bool().default(false),
 

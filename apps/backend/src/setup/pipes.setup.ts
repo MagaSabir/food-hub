@@ -25,9 +25,8 @@ export function setupPipes(app: INestApplication) {
       stopAtFirstError: true,
       forbidNonWhitelisted: true,
       transformOptions: { enableImplicitConversion: true },
-      exceptionFactory: (errors: ClassValidatorError[]) => {
-        new InputValidationError(errorFormatter(errors));
-      },
+      exceptionFactory: (errors: ClassValidatorError[]) =>
+        new InputValidationError(errorFormatter(errors)),
     }),
   );
 }
