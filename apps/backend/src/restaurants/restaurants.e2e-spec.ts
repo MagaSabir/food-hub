@@ -4,9 +4,11 @@ import { INestApplication } from '@nestjs/common';
 import { applyAppInitialization } from '../setup/apply-app-initialization';
 import request from 'supertest';
 import { PrismaService } from '../prisma/prisma.service';
+import { RestaurantListItem } from '@foodhubme/shared';
+import { App } from 'supertest/types';
 
 describe('GET /api/restaurants (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
   let prisma: PrismaService;
 
   beforeAll(async (): Promise<void> => {
@@ -50,16 +52,19 @@ describe('GET /api/restaurants (e2e)', () => {
     const res = await request(app.getHttpServer())
       .get('/api/restaurants')
       .expect(200);
+
+    const body = res.body as RestaurantListItem[];
     expect(res.body).toHaveLength(1);
-    expect(res.body[0].name).toBe('Active');
+    expect(body[0].name).toBe('Active');
   });
 
   it('should not expose internal fields', async () => {
     const res = await request(app.getHttpServer())
       .get('/api/restaurants')
       .expect(200);
+    const body = res.body as RestaurantListItem[];
 
-    expect(res.body[0].commissiomPercent).toBeUndefined();
-    expect(res.body[0].isActive).toBeUndefined();
+    expect(Object.keys(body[0])).not.toContain('commissionPercent');
+    expect(Object.keys(body[0])).not.toContain('isActive');
   });
 });
