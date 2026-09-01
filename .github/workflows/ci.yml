@@ -1,11 +1,10 @@
 name: CI
 
-# Гоняем качество на PR/пуш в dev (интеграция) и main (прод) — обе всегда зелёные.
 on:
   pull_request:
-    branches: [main, dev]
+    branches: [main]
   push:
-    branches: [main, dev]
+    branches: [main]
 
 # Новый пуш в ту же ветку/PR отменяет предыдущий прогон — не жжём минуты зря.
 concurrency:
@@ -47,3 +46,54 @@ jobs:
 
       - name: Test
         run: pnpm turbo run test
+
+  e2e:
+    name: e2e (backend)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: foodhub
+          POSTGRES_PASSWORD: foodhub123
+          POSTGRES_DB: foodhub_test
+        ports:
+          - 5432:5432
+        # Шаги начнутся только когда база ответит на pg_isready.
+        options: >-
+          --health-cmd "pg_isready -U foodhub -d foodhub_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://foodhub:foodhub123@localhost:5432/foodhub_test?schema=public
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.6.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Бэкенд импортирует @foodhubme/shared из dist, а dist не в репозитории.
+      - name: Build shared
+        run: pnpm turbo run build --filter=@foodhubme/shared
+
+      - name: Apply migrations
+        run: pnpm --filter @foodhubme/backend exec prisma migrate deploy
+
+      - name: E2E tests
+        run: pnpm --filter @foodhubme/backend test:e2e
