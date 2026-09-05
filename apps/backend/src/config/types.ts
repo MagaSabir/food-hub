@@ -23,3 +23,10 @@ export interface DatabaseConfig {
   url: string;
   logQueries: boolean;
 }
+
+export interface AuthConfig {
+  accessSecret: string;
+  accessExpiresIn: string;
+  refreshSecret: string;
+  refreshExpiresIn: string;
+}
