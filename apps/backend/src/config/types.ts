@@ -24,6 +24,9 @@ export interface DatabaseConfig {
   logQueries: boolean;
 }
 
+export interface RedisConfig {
+  url: string;
+}
 export interface AuthConfig {
   accessSecret: string;
   accessExpiresIn: string;

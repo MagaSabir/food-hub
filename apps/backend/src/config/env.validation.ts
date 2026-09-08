@@ -22,6 +22,11 @@ export const envValidationSchema = Joi.object().keys({
     .required(),
   LOG_QUERIES: bool().default(false),
 
+  // - Redis -
+  REDIS_URL: Joi.string()
+    .uri({ scheme: ['redis', 'redis'] })
+    .required(),
+
   // - JWT -
   JWT_ACCESS_SECRET: Joi.string().min(32).required(),
   JWT_ACCESS_EXPIRES_IN: Joi.string()
