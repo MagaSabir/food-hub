@@ -39,4 +39,18 @@ export const envValidationSchema = Joi.object().keys({
   JWT_REFRESH_EXPIRES_IN: Joi.string()
     .pattern(/^\d+[smhd]$/)
     .default('30d'),
+  // - Cookie -
+  COOKIE_SECRET: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().min(1).required(),
+    otherwise: Joi.string().allow('').default(''),
+  }),
+  COOKIE_HTTP_ONLY: bool().default(true),
+  COOKIE_SECURE: bool().default(false),
+  COOKIE_SAME_SITE: Joi.string().valid('lax', 'strict', 'none').default('lax'),
+  COOKIE_MAX_AGE: Joi.number().default(2592000000),
+
+  // - Throttle -
+  THROTTLE_TTL: Joi.number().default(60),
+  THROTTLE_LIMIT: Joi.number().default(100),
 });

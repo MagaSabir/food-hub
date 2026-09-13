@@ -33,3 +33,16 @@ export interface AuthConfig {
   refreshSecret: string;
   refreshExpiresIn: string;
 }
+
+export interface CookieConfig {
+  secret: string | undefined;
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: 'lax' | 'strict' | 'none';
+  maxAge: number;
+}
+
+export interface ThrottleConfig {
+  ttl: number;
+  limit: number;
+}

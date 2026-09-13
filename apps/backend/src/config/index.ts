@@ -4,6 +4,8 @@ import { swaggerConfig } from './swagger.config';
 import { databaseConfig } from './database.config';
 import { authConfig } from './auth.config';
 import { redisConfig } from './redis.config';
+import { cookieConfig } from './cookie.config';
+import { throttleConfig } from './throttle.config';
 
 export const configLoaders = [
   appConfig,
@@ -12,8 +14,18 @@ export const configLoaders = [
   databaseConfig,
   authConfig,
   redisConfig,
+  cookieConfig,
+  throttleConfig,
 ];
 
-export { appConfig, environmentConfig, swaggerConfig, authConfig, redisConfig };
+export {
+  appConfig,
+  environmentConfig,
+  swaggerConfig,
+  authConfig,
+  redisConfig,
+  cookieConfig,
+  throttleConfig,
+};
 
 export * from './types';
