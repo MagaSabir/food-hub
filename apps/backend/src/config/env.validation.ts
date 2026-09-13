@@ -21,4 +21,36 @@ export const envValidationSchema = Joi.object().keys({
     .uri({ scheme: ['postgres', 'postgresql'] })
     .required(),
   LOG_QUERIES: bool().default(false),
+
+  // - Redis -
+  REDIS_URL: Joi.string()
+    .uri({ scheme: ['redis', 'redis'] })
+    .required(),
+
+  // - JWT -
+  JWT_ACCESS_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_EXPIRES_IN: Joi.string()
+    .pattern(/^\d+[smhd]$/)
+    .default('15m'),
+  JWT_REFRESH_SECRET: Joi.string()
+    .min(32)
+    .required()
+    .invalid(Joi.ref('JWT_ACCESS_SECRET')),
+  JWT_REFRESH_EXPIRES_IN: Joi.string()
+    .pattern(/^\d+[smhd]$/)
+    .default('30d'),
+  // - Cookie -
+  COOKIE_SECRET: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().min(1).required(),
+    otherwise: Joi.string().allow('').default(''),
+  }),
+  COOKIE_HTTP_ONLY: bool().default(true),
+  COOKIE_SECURE: bool().default(false),
+  COOKIE_SAME_SITE: Joi.string().valid('lax', 'strict', 'none').default('lax'),
+  COOKIE_MAX_AGE: Joi.number().default(2592000000),
+
+  // - Throttle -
+  THROTTLE_TTL: Joi.number().default(60),
+  THROTTLE_LIMIT: Joi.number().default(100),
 });

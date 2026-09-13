@@ -67,8 +67,23 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
       DATABASE_URL: postgresql://foodhub:foodhub123@localhost:5432/foodhub_test?schema=public
+      REDIS_URL: redis://localhost:6379
+      # Не секреты: значения фиктивные, нужны лишь чтобы прошла Joi-валидация
+      # env при старте приложения. В GitHub Secrets им делать нечего.
+      JWT_ACCESS_SECRET: ci-access-secret-ci-access-secret-32
+      JWT_REFRESH_SECRET: ci-refresh-secret-ci-refresh-secret-32
 
     steps:
       - name: Checkout
@@ -94,6 +109,10 @@ jobs:
 
       - name: Apply migrations
         run: pnpm --filter @foodhubme/backend exec prisma migrate deploy
+
+      # Аккаунты платформы и ресторана заводит сид — на них опираются e2e auth.
+      - name: Seed test database
+        run: pnpm --filter @foodhubme/backend exec cross-env NODE_ENV=test ts-node prisma/seed.ts
 
       - name: E2E tests
         run: pnpm --filter @foodhubme/backend test:e2e

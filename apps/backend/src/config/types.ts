@@ -23,3 +23,26 @@ export interface DatabaseConfig {
   url: string;
   logQueries: boolean;
 }
+
+export interface RedisConfig {
+  url: string;
+}
+export interface AuthConfig {
+  accessSecret: string;
+  accessExpiresIn: string;
+  refreshSecret: string;
+  refreshExpiresIn: string;
+}
+
+export interface CookieConfig {
+  secret: string | undefined;
+  httpOnly: boolean;
+  secure: boolean;
+  sameSite: 'lax' | 'strict' | 'none';
+  maxAge: number;
+}
+
+export interface ThrottleConfig {
+  ttl: number;
+  limit: number;
+}

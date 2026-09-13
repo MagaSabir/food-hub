@@ -11,8 +11,10 @@ import { Request, Response } from 'express';
 import {
   DomainError,
   Extension,
+  ConflictError,
   ForbiddenError,
   NotFoundError,
+  TooManyRequestsError,
   UnauthorizedError,
   ValidationError,
 } from '../errors/domain.error';
@@ -45,6 +47,12 @@ const DOMAIN_ERROR_MAP: ReadonlyArray<{
     type: UnauthorizedError,
     status: HttpStatus.UNAUTHORIZED,
     error: 'Unauthorized',
+  },
+  { type: ConflictError, status: HttpStatus.CONFLICT, error: 'Conflict' },
+  {
+    type: TooManyRequestsError,
+    status: HttpStatus.TOO_MANY_REQUESTS,
+    error: 'Too Many Requests',
   },
 ];
 

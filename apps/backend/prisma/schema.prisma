@@ -34,10 +34,11 @@ model Restaurant {
 
   commissionPercent Decimal @default(0) @map("commission_percent") @db.Decimal(5, 2)
 
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  branches  Branch[]
+  isActive   Boolean     @default(true) @map("is_active")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+  branches   Branch[]
+  staffUsers StaffUser[]
 
   @@map("restaurants")
 }
@@ -76,10 +77,79 @@ model Branch {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  city       City       @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  restaurant Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  city       City        @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  staffUsers StaffUser[]
 
   @@unique([restaurantId, name])
   @@index([cityId])
   @@map("branches")
+}
+
+// Auth
+
+enum Role {
+  CLIENT
+  RESTAURANT_OWNER
+  RESTAURANT_STAFF
+  PLATFORM_ADMIN
+}
+
+model User {
+  id        String    @id @default(uuid()) @db.Uuid
+  phone     String    @unique
+  name      String?
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  devices UserDevice[]
+
+  @@map("users")
+}
+
+model UserDevice {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  expoPushToken String   @map("expo_push_token")
+  platform      String?
+  lastActiveAt  DateTime @default(now()) @map("last_active_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([expoPushToken])
+  @@index([userId])
+  @@map("user_devices")
+}
+
+model StaffUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  restaurantId String   @map("restaurant_id") @db.Uuid
+  branchId     String?  @map("branch_id") @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([restaurantId])
+  @@index([branchId])
+  @@map("staff_users")
+}
+
+model PlatformAdmin {
+  id           String @id @default(uuid()) @db.Uuid
+  email        String @unique
+  passwordHash String @map("password_hash")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_admins")
 }
