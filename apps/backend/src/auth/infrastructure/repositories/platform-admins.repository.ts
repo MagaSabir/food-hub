@@ -1,14 +1,20 @@
 import { Injectable } from '@nestjs/common';
+import type { PlatformAdmin } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { PlatformAdmin } from '@prisma/client';
 
 @Injectable()
 export class PlatformAdminsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByEmail(email: string): Promise<PlatformAdmin | null> {
+  findActiveByEmail(email: string): Promise<PlatformAdmin | null> {
     return this.prisma.platformAdmin.findFirst({
       where: { email, isActive: true },
+    });
+  }
+
+  findActiveById(id: string): Promise<PlatformAdmin | null> {
+    return this.prisma.platformAdmin.findFirst({
+      where: { id, isActive: true },
     });
   }
 }
