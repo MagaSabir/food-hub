@@ -7,8 +7,11 @@ import { envValidationSchema } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { HealthModule } from './health/health.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { AuthModule } from './auth/auth.module';
+import { AccessTokenGuard } from './auth/api/guards/access-token.guard';
+import { RolesGuard } from './auth/api/guards/roles.guard';
 import { RedisModule } from './redis/redis.module';
 import { RedisService } from './redis/redis.service';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -36,6 +39,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
         ),
     }),
 
+    HealthModule,
     RestaurantsModule,
     AuthModule,
   ],
@@ -43,6 +47,8 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useExisting: AccessTokenGuard },
+    { provide: APP_GUARD, useExisting: RolesGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })
