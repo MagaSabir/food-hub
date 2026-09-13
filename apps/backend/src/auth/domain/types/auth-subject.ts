@@ -7,5 +7,5 @@ export enum AuthSubjectType {
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
-  refreshTtSec: number;
+  refreshTtlSec: number;
 }

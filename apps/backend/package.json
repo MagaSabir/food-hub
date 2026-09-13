@@ -32,6 +32,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.1.27",
     "@nestjs/cqrs": "^11.0.3",
+    "@nestjs/jwt": "^12.0.1",
     "@nestjs/platform-express": "^11.1.27",
     "@nestjs/swagger": "^11.4.4",
     "@node-rs/argon2": "^2.2.0",

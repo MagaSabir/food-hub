@@ -1,0 +1,4 @@
+export const ACCESS_JWT_SERVICE = Symbol('ACCESS_JWT_SERVICE');
+export const REFRESH_JWT_SERVICE = Symbol('REFRESH_JWT_SERVICE');
+
+export const REFRESH_TOKEN_COOKIE = 'refreshToken';
