@@ -13,7 +13,6 @@ import {
 } from '@foodhubme/shared';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import request from 'supertest';
 import { io, Socket } from 'socket.io-client';
@@ -65,10 +64,9 @@ describe('Живой канал WebSocket (e2e)', () => {
   };
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideGuard(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
 
     app = moduleRef.createNestApplication<NestExpressApplication>();
     applyAppInitialization(app);

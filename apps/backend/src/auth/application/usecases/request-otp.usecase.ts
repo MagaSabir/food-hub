@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import { OtpChannelPreference } from '@foodhubme/shared';
 import { Inject } from '@nestjs/common';
 import { Command, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
@@ -19,7 +20,10 @@ export interface OtpRequestResult {
 }
 
 export class RequestOtpCommand extends Command<OtpRequestResult> {
-  constructor(public readonly phone: string) {
+  constructor(
+    public readonly phone: string,
+    public readonly preference: OtpChannelPreference = 'auto',
+  ) {
     super();
   }
 }
@@ -35,7 +39,10 @@ export class RequestOtpUseCase implements ICommandHandler<
     @Inject(OTP_SENDER) private readonly sender: IOtpSender,
   ) {}
 
-  async execute({ phone }: RequestOtpCommand): Promise<OtpRequestResult> {
+  async execute({
+    phone,
+    preference,
+  }: RequestOtpCommand): Promise<OtpRequestResult> {
     const cooldownLeft = await this.otp.startCooldown(phone);
     if (cooldownLeft > 0) {
       throw new OtpTooSoonError(cooldownLeft);
@@ -49,9 +56,9 @@ export class RequestOtpUseCase implements ICommandHandler<
 
       const code = this.generateCode();
 
-      await this.otp.saveCode(phone, await this.hasher.hash(code));
+      await this.otp.addCode(phone, await this.hasher.hash(code));
 
-      await this.sender.send(phone, code);
+      await this.sender.send(phone, code, preference);
     } catch (error) {
       await this.otp.releaseCooldown(phone);
       throw error;

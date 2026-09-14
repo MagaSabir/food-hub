@@ -115,7 +115,7 @@ export class AuthController {
     @Body() body: RequestOtpInputDto,
   ): Promise<OtpRequestedViewDto> {
     const result: OtpRequestResult = await this.commandBus.execute(
-      new RequestOtpCommand(body.phone),
+      new RequestOtpCommand(body.phone, body.channel ?? 'auto'),
     );
 
     return OtpRequestedViewDto.create(result);

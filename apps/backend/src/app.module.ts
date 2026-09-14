@@ -10,6 +10,7 @@ import {
 } from './config';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
+import { QueuesModule } from './queues/queues.module';
 import { RedisService } from './redis/redis.service';
 import { buildThrottlerOptions } from './setup/throttler-options.factory';
 import { HealthModule } from './health/health.module';
@@ -19,6 +20,7 @@ import { FavoritesModule } from './favorites/favorites.module';
 import { OrdersModule } from './orders/orders.module';
 import { AuthModule } from './auth/auth.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { AccessTokenGuard } from './auth/api/guards/access-token.guard';
 import { RolesGuard } from './auth/api/guards/roles.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -40,6 +42,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'development';
     }),
     PrismaModule,
     RedisModule,
+    QueuesModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService, RedisService],
       useFactory: (config: ConfigService, redis: RedisService) =>
@@ -56,6 +59,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'development';
     OrdersModule,
     AuthModule,
     RealtimeModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

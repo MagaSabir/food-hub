@@ -1,4 +1,4 @@
-import { OrderStatus } from '@foodhubme/shared';
+import { OrderStatus, OrderType } from '@foodhubme/shared';
 
 export class OrderStatusChangedEvent {
   constructor(
@@ -6,6 +6,7 @@ export class OrderStatusChangedEvent {
       id: string;
       orderNumber: number;
       status: OrderStatus;
+      type: OrderType;
       userId: string;
       restaurantId: string;
       branchId: string;

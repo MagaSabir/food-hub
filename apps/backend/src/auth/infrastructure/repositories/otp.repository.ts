@@ -6,8 +6,8 @@ import { OtpPolicy } from '../../domain/policies/otp.policy';
 export class OtpRepository {
   constructor(private readonly redis: RedisService) {}
 
-  private codeKey(phone: string): string {
-    return `otp:code:${phone}`;
+  private codesKey(phone: string): string {
+    return `otp:codes:${phone}`;
   }
 
   private cooldownKey(phone: string): string {
@@ -60,16 +60,20 @@ export class OtpRepository {
     return `otp:attempts:${phone}`;
   }
 
-  async saveCode(phone: string, codeHash: string): Promise<void> {
+  async addCode(phone: string, codeHash: string): Promise<void> {
+    const key = this.codesKey(phone);
+
     await this.redis.client
       .multi()
-      .set(this.codeKey(phone), codeHash, 'EX', OtpPolicy.TTL_SEC)
+      .lpush(key, codeHash)
+      .ltrim(key, 0, OtpPolicy.LIVE_CODES - 1)
+      .expire(key, OtpPolicy.TTL_SEC)
       .del(this.attemptsKey(phone))
       .exec();
   }
 
-  findCodeHash(phone: string): Promise<string | null> {
-    return this.redis.client.get(this.codeKey(phone));
+  findCodeHashes(phone: string): Promise<string[]> {
+    return this.redis.client.lrange(this.codesKey(phone), 0, -1);
   }
 
   async incrementAttempts(phone: string): Promise<number> {
@@ -84,6 +88,6 @@ export class OtpRepository {
   }
 
   async deleteCode(phone: string): Promise<void> {
-    await this.redis.client.del(this.codeKey(phone), this.attemptsKey(phone));
+    await this.redis.client.del(this.codesKey(phone), this.attemptsKey(phone));
   }
 }

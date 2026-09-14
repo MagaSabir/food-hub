@@ -7,6 +7,7 @@ import { throttleConfig } from './throttle.config';
 import { databaseConfig } from './database.config';
 import { redisConfig } from './redis.config';
 import { authConfig } from './auth.config';
+import { pushConfig } from './push.config';
 
 export const configLoaders = [
   appConfig,
@@ -18,6 +19,7 @@ export const configLoaders = [
   databaseConfig,
   redisConfig,
   authConfig,
+  pushConfig,
 ];
 
 export {
@@ -30,6 +32,7 @@ export {
   databaseConfig,
   redisConfig,
   authConfig,
+  pushConfig,
 };
 export { envValidationSchema, envValidationOptions } from './env.validation';
 export * from './types';

@@ -51,6 +51,8 @@ export const envValidationSchema = Joi.object({
 
   THROTTLE_TTL: Joi.number().default(60),
   THROTTLE_LIMIT: Joi.number().default(100),
+
+  EXPO_ACCESS_TOKEN: Joi.string().allow('').default(''),
 });
 
 export const envValidationOptions = {

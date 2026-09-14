@@ -6,3 +6,4 @@ export * from './contracts/menu';
 export * from './contracts/auth';
 export * from './contracts/order';
 export * from './contracts/realtime';
+export * from './contracts/notifications';

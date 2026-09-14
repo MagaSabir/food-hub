@@ -25,7 +25,7 @@ const TOKENS: AuthTokens = {
 
 describe('VerifyOtpUseCase', () => {
   let useCase: VerifyOtpUseCase;
-  let findCodeHash: jest.Mock;
+  let findCodeHashes: jest.Mock;
   let incrementAttempts: jest.Mock;
   let deleteCode: jest.Mock;
   let verify: jest.Mock;
@@ -34,7 +34,7 @@ describe('VerifyOtpUseCase', () => {
   let issue: jest.Mock;
 
   beforeEach(async () => {
-    findCodeHash = jest.fn().mockResolvedValue('$argon2id$stored');
+    findCodeHashes = jest.fn().mockResolvedValue(['$argon2id$stored']);
     incrementAttempts = jest.fn().mockResolvedValue(1);
     deleteCode = jest.fn().mockResolvedValue(undefined);
     verify = jest.fn().mockResolvedValue(true);
@@ -47,7 +47,7 @@ describe('VerifyOtpUseCase', () => {
         VerifyOtpUseCase,
         {
           provide: OtpRepository,
-          useValue: { findCodeHash, incrementAttempts, deleteCode },
+          useValue: { findCodeHashes, incrementAttempts, deleteCode },
         },
         { provide: PasswordHasher, useValue: { verify } },
         { provide: UsersRepository, useValue: { findOrCreateByPhone } },
@@ -60,6 +60,45 @@ describe('VerifyOtpUseCase', () => {
   });
 
   const verifyOtp = () => useCase.execute(new VerifyOtpCommand(PHONE, CODE));
+
+  describe('два действующих кода (Шаг 6.3)', () => {
+    it('подходит СВЕЖИЙ — на нём проверка и заканчивается', async () => {
+      findCodeHashes.mockResolvedValue(['$argon2id$new', '$argon2id$old']);
+      verify.mockImplementation((hash: string) =>
+        Promise.resolve(hash === '$argon2id$new'),
+      );
+
+      await expect(verifyOtp()).resolves.toEqual(TOKENS);
+
+      expect(verify).toHaveBeenCalledTimes(1);
+    });
+
+    it('подходит СТАРЫЙ — ради этого шаг и делался', async () => {
+      findCodeHashes.mockResolvedValue(['$argon2id$new', '$argon2id$old']);
+      verify.mockImplementation((hash: string) =>
+        Promise.resolve(hash === '$argon2id$old'),
+      );
+
+      await expect(verifyOtp()).resolves.toEqual(TOKENS);
+      expect(verify).toHaveBeenCalledTimes(2);
+    });
+
+    it('не подошёл ни один → отказ, попытка засчитана', async () => {
+      findCodeHashes.mockResolvedValue(['$argon2id$new', '$argon2id$old']);
+      verify.mockResolvedValue(false);
+
+      await expect(verifyOtp()).rejects.toBeInstanceOf(InvalidOtpError);
+      expect(incrementAttempts).toHaveBeenCalledWith(PHONE);
+    });
+
+    it('вход гасит ОБА кода', async () => {
+      findCodeHashes.mockResolvedValue(['$argon2id$new', '$argon2id$old']);
+
+      await verifyOtp();
+
+      expect(deleteCode).toHaveBeenCalledWith(PHONE);
+    });
+  });
 
   describe('верный код', () => {
     it('возвращает пару токенов', async () => {
@@ -117,7 +156,7 @@ describe('VerifyOtpUseCase', () => {
 
   describe('кода нет (не запрашивали, истёк, уже использован)', () => {
     it('→ та же ошибка, что при неверном коде', async () => {
-      findCodeHash.mockResolvedValue(null);
+      findCodeHashes.mockResolvedValue([]);
 
       const error = await verifyOtp().catch((e: unknown) => e as Error);
 
@@ -126,7 +165,7 @@ describe('VerifyOtpUseCase', () => {
     });
 
     it('попытка не засчитывается — считать нечего', async () => {
-      findCodeHash.mockResolvedValue(null);
+      findCodeHashes.mockResolvedValue([]);
 
       await verifyOtp().catch(() => undefined);
 

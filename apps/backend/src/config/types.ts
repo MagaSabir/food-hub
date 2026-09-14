@@ -52,3 +52,7 @@ export interface AuthConfig {
 export interface RedisConfig {
   url: string;
 }
+
+export interface PushConfig {
+  expoAccessToken: string | undefined;
+}

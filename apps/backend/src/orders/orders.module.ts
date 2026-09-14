@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { OrdersController } from './api/orders.controller';
 import { RestaurantOrdersController } from './api/restaurant-orders.controller';
@@ -15,9 +16,10 @@ import { RestaurantOrdersQueryRepository } from './infrastructure/repositories/r
 import { OrdersRepository } from './infrastructure/repositories/orders.repository';
 import { NotifyBranchOnOrderCreated } from './application/event-handlers/notify-branch-on-order-created.handler';
 import { NotifyOnOrderStatusChanged } from './application/event-handlers/notify-on-order-status-changed.handler';
+import { PushOnOrderStatusChanged } from './application/event-handlers/push-on-order-status-changed.handler';
 
 @Module({
-  imports: [CqrsModule, RealtimeModule],
+  imports: [CqrsModule, RealtimeModule, NotificationsModule],
   controllers: [OrdersController, RestaurantOrdersController],
   providers: [
     GetDeliveryQuoteQueryHandler,
@@ -29,6 +31,7 @@ import { NotifyOnOrderStatusChanged } from './application/event-handlers/notify-
     ChangeOrderStatusUseCase,
     NotifyBranchOnOrderCreated,
     NotifyOnOrderStatusChanged,
+    PushOnOrderStatusChanged,
     OrdersRepository,
     OrdersQueryRepository,
     RestaurantOrdersQueryRepository,

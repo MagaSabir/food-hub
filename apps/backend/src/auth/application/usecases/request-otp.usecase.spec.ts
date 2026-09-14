@@ -16,17 +16,19 @@ describe('RequestOtpUseCase', () => {
   let startCooldown: jest.Mock;
   let releaseCooldown: jest.Mock;
   let incrementHourlyCount: jest.Mock;
-  let saveCode: jest.Mock;
+  let addCode: jest.Mock<Promise<void>, [string, string]>;
   let hash: jest.Mock;
-  let send: jest.Mock<Promise<void>, [string, string]>;
+  let send: jest.Mock<Promise<void>, [string, string, string]>;
 
   beforeEach(async () => {
     startCooldown = jest.fn().mockResolvedValue(0);
     releaseCooldown = jest.fn().mockResolvedValue(undefined);
     incrementHourlyCount = jest.fn().mockResolvedValue(1);
-    saveCode = jest.fn().mockResolvedValue(undefined);
+    addCode = jest.fn<Promise<void>, [string, string]>().mockResolvedValue();
     hash = jest.fn().mockResolvedValue('$argon2id$hashed');
-    send = jest.fn<Promise<void>, [string, string]>().mockResolvedValue();
+    send = jest
+      .fn<Promise<void>, [string, string, string]>()
+      .mockResolvedValue();
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -37,7 +39,7 @@ describe('RequestOtpUseCase', () => {
             startCooldown,
             releaseCooldown,
             incrementHourlyCount,
-            saveCode,
+            addCode,
           },
         },
         { provide: PasswordHasher, useValue: { hash } },
@@ -48,9 +50,31 @@ describe('RequestOtpUseCase', () => {
     useCase = moduleRef.get(RequestOtpUseCase);
   });
 
-  const request = () => useCase.execute(new RequestOtpCommand(PHONE));
+  const request = (channel?: 'auto' | 'sms') =>
+    useCase.execute(new RequestOtpCommand(PHONE, channel ?? 'auto'));
 
   const sentCode = (): string => send.mock.calls[0][1];
+
+  describe('канал доставки (Шаг 6.3)', () => {
+    it('по умолчанию решает сервер', async () => {
+      await request();
+
+      expect(send.mock.calls[0][2]).toBe('auto');
+    });
+
+    it('«не пришёл код» доезжает до отправителя', async () => {
+      await request('sms');
+
+      expect(send.mock.calls[0][2]).toBe('sms');
+    });
+
+    it('код ДОБАВЛЯЕТСЯ к действующим, а не заменяет их', async () => {
+      await request('sms');
+
+      expect(addCode).toHaveBeenCalledTimes(1);
+      expect(addCode.mock.calls[0][0]).toBe(PHONE);
+    });
+  });
 
   describe('обычный запрос', () => {
     it('отправляет код и возвращает тайминги', async () => {
@@ -84,7 +108,7 @@ describe('RequestOtpUseCase', () => {
       await request();
 
       expect(hash).toHaveBeenCalledWith(sentCode());
-      expect(saveCode).toHaveBeenCalledWith(PHONE, '$argon2id$hashed');
+      expect(addCode).toHaveBeenCalledWith(PHONE, '$argon2id$hashed');
     });
   });
 
@@ -106,7 +130,7 @@ describe('RequestOtpUseCase', () => {
       await request().catch(() => undefined);
 
       expect(send).not.toHaveBeenCalled();
-      expect(saveCode).not.toHaveBeenCalled();
+      expect(addCode).not.toHaveBeenCalled();
       expect(incrementHourlyCount).not.toHaveBeenCalled();
     });
   });
@@ -123,7 +147,7 @@ describe('RequestOtpUseCase', () => {
 
       await expect(request()).rejects.toBeInstanceOf(OtpLimitExceededError);
       expect(send).not.toHaveBeenCalled();
-      expect(saveCode).not.toHaveBeenCalled();
+      expect(addCode).not.toHaveBeenCalled();
     });
   });
 

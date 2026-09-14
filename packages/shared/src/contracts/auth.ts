@@ -2,6 +2,8 @@ import { Role } from '../enums';
 
 export const OTP_CODE_LENGTH = 5;
 
+export type OtpChannelPreference = 'auto' | 'sms';
+
 export interface OtpRequested {
   cooldownSec: number;
   expiresInSec: number;

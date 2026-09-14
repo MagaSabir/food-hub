@@ -87,6 +87,7 @@ export class ChangeOrderStatusUseCase implements ICommandHandler<
           id: updated.id,
           orderNumber: updated.orderNumber,
           status: to,
+          type: orderType,
           userId: updated.userId,
           restaurantId: updated.restaurantId,
           branchId: updated.branchId,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
 import { CqrsModule } from '@nestjs/cqrs';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { AuthConfig } from '../config';
@@ -22,8 +23,17 @@ import {
 import { AuthQueryRepository } from './infrastructure/repositories/auth.query-repository';
 import { LoginAttemptsRepository } from './infrastructure/repositories/login-attempts.repository';
 import { OtpRepository } from './infrastructure/repositories/otp.repository';
-import { LogOtpSender } from './infrastructure/otp-sender/log-otp-sender';
-import { OTP_SENDER } from './infrastructure/otp-sender/otp-sender.interface';
+import { CompositeOtpSender } from './infrastructure/otp-sender/composite-otp-sender';
+import { MockSmsChannel } from './infrastructure/otp-sender/channels/mock-sms.channel';
+import { MockTelegramChannel } from './infrastructure/otp-sender/channels/mock-telegram.channel';
+import { OtpDeliveryProcessor } from './infrastructure/otp-sender/otp-delivery.processor';
+import { QueuedOtpSender } from './infrastructure/otp-sender/queued-otp-sender';
+import { QUEUES } from '../queues/queue-names';
+import {
+  OTP_CHANNEL,
+  OTP_CHANNELS,
+  OTP_SENDER,
+} from './infrastructure/otp-sender/otp-sender.interface';
 import { PasswordHasher } from './infrastructure/crypto/password-hasher';
 import { PlatformAdminsRepository } from './infrastructure/repositories/platform-admins.repository';
 import { SessionsRepository } from './infrastructure/repositories/sessions.repository';
@@ -60,7 +70,10 @@ const jwtProviders = [
 ];
 
 @Module({
-  imports: [CqrsModule],
+  imports: [
+    CqrsModule,
+    BullModule.registerQueue({ name: QUEUES.OTP_DELIVERY }),
+  ],
   controllers: [AuthController],
   providers: [
     ...jwtProviders,
@@ -70,7 +83,19 @@ const jwtProviders = [
     RequestOtpUseCase,
     VerifyOtpUseCase,
     GetMeQueryHandler,
-    { provide: OTP_SENDER, useClass: LogOtpSender },
+    { provide: OTP_SENDER, useClass: QueuedOtpSender },
+    { provide: OTP_CHANNEL, useClass: CompositeOtpSender },
+    MockTelegramChannel,
+    MockSmsChannel,
+    {
+      provide: OTP_CHANNELS,
+      inject: [MockTelegramChannel, MockSmsChannel],
+      useFactory: (telegram: MockTelegramChannel, sms: MockSmsChannel) => [
+        telegram,
+        sms,
+      ],
+    },
+    OtpDeliveryProcessor,
     AuthTokenService,
     SessionIssuer,
     RefreshTokenGuard,

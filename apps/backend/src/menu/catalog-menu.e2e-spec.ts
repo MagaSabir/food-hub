@@ -1,6 +1,5 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { ErrorCodes } from '@foodhubme/shared';
 import request from 'supertest';
 import { AppModule } from '../app.module';
@@ -45,10 +44,9 @@ describe('Каталог и меню (e2e)', () => {
   const api = () => request(app.getHttpServer());
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideGuard(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
 
     app = moduleRef.createNestApplication<NestExpressApplication>();
     applyAppInitialization(app);

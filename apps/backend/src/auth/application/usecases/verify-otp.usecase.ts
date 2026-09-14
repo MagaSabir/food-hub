@@ -47,9 +47,9 @@ export class VerifyOtpUseCase implements ICommandHandler<
   }
 
   private async assertCode(phone: string, code: string): Promise<void> {
-    const storedHash = await this.otp.findCodeHash(phone);
+    const storedHashes = await this.otp.findCodeHashes(phone);
 
-    if (!storedHash) {
+    if (storedHashes.length === 0) {
       throw new InvalidOtpError();
     }
 
@@ -59,8 +59,16 @@ export class VerifyOtpUseCase implements ICommandHandler<
       throw new OtpAttemptsExceededError();
     }
 
-    if (!(await this.hasher.verify(storedHash, code))) {
+    if (!(await this.matchesAny(storedHashes, code))) {
       throw new InvalidOtpError();
     }
+  }
+
+  private async matchesAny(hashes: string[], code: string): Promise<boolean> {
+    for (const hash of hashes) {
+      if (await this.hasher.verify(hash, code)) return true;
+    }
+
+    return false;
   }
 }
