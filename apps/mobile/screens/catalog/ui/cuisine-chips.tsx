@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Animated, Pressable, ScrollView, Text } from 'react-native';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
@@ -6,25 +6,25 @@ import { SquaresFourIcon } from 'phosphor-react-native';
 
 const CATEGORIES = [
   { id: 'all', label: 'Все' },
-  { id: 'pizza', label: 'Пицца', icon: require('@/assets/cuisines/pizza.png') },
-  { id: 'sushi', label: 'Суши', icon: require('@/assets/cuisines/sushi.png') },
+  { id: 'Пицца', label: 'Пицца', icon: require('@/assets/cuisines/pizza.png') },
+  { id: 'Суши', label: 'Суши', icon: require('@/assets/cuisines/sushi.png') },
   {
-    id: 'burgers',
+    id: 'Бургеры',
     label: 'Бургеры',
     icon: require('@/assets/cuisines/burgers.png'),
   },
   {
-    id: 'breakfast',
+    id: 'Завтраки',
     label: 'Завтраки',
     icon: require('@/assets/cuisines/breakfast.png'),
   },
   {
-    id: 'coffee',
+    id: 'Кофе',
     label: 'Кофе',
     icon: require('@/assets/cuisines/coffee.png'),
   },
   {
-    id: 'salad',
+    id: 'Салаты',
     label: 'Салаты',
     icon: require('@/assets/cuisines/salad.png'),
   },
@@ -93,12 +93,17 @@ function CategoryChip({
   );
 }
 
-export function CuisineChips() {
-  const [activeId, setActiveId] = useState('all');
+interface CuisineChipsProps {
+  value: string | null;
+  onChange: (cuisine: string | null) => void;
+}
 
-  const handlePress = async (id: string) => {
+export function CuisineChips({ value, onChange }: CuisineChipsProps) {
+  const activeId = value ?? 'all';
+
+  const handlePress = (id: string) => {
     if (id !== activeId) Haptics.selectionAsync();
-    setActiveId(id);
+    onChange(id === 'all' ? null : id);
   };
 
   return (

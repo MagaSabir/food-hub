@@ -1,4 +1,4 @@
-import { View, Text, Pressable } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { CaretRightIcon } from 'phosphor-react-native';
 
 interface SectionHeaderProps {
@@ -8,7 +8,7 @@ interface SectionHeaderProps {
 
 export function SectionHeader({ title, onSeeAll }: SectionHeaderProps) {
   return (
-    <View className="flex-row items-center justify-between px-5 pb-1 pt-2">
+    <View className="flex-row items-center justify-between px-5 pb-1 pt-4">
       <Text className="text-[19px] font-bold text-ink">{title}</Text>
       {onSeeAll ? (
         <Pressable

@@ -9,9 +9,12 @@ module.exports = {
     './entities/**/*.{js,jsx,ts,tsx}',
     './shared/**/*.{js,jsx,ts,tsx}',
   ],
+  // Пресет NativeWind — адаптирует Tailwind под React Native.
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      // Токены из ДИЗАЙН-СПЕКИ Sabir (Apple HIG / premium minimal, 8pt grid).
+      // Эталон = спека (надёжнее пипетки по фото). primary green = #49B85D.
       colors: {
         primary: {
           50: '#EAF8ED', // Light

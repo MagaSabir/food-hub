@@ -4,22 +4,31 @@ import { surfaceShadow } from '@/shared/lib/surface';
 
 interface CatalogHeaderProps {
   city: string;
-  address: string;
+  address: string | null;
+  addressPlaceholder?: string;
+  onPressAddress: () => void;
   hasUnreadNotifications?: boolean;
 }
 
 export function CatalogHeader({
   city,
   address,
+  addressPlaceholder = 'Указать адрес доставки',
+  onPressAddress,
   hasUnreadNotifications = false,
 }: CatalogHeaderProps) {
   return (
     <View className="flex-row items-center justify-between px-5 pb-3 pt-1">
-      {/* Локация */}
+      {}
       <Pressable
+        onPress={onPressAddress}
         accessibilityRole="button"
-        accessibilityLabel={`Адрес доставки: ${city}, ${address}. Изменить`}
-        className="flex-1 flex-row items-center gap-2"
+        accessibilityLabel={
+          address
+            ? `Адрес доставки: ${city}, ${address}. Изменить`
+            : addressPlaceholder
+        }
+        className="flex-1 flex-row items-center gap-2 active:opacity-60"
       >
         <MapPinIcon size={28} color="#49B85D" weight="fill" />
         <View className="flex-1">
@@ -33,15 +42,17 @@ export function CatalogHeader({
             <CaretDownIcon size={16} color="#1D1D1F" weight="bold" />
           </View>
           <Text
-            className="text-[13px] font-medium text-ink-secondary"
+            className={`text-[13px] font-medium ${
+              address ? 'text-ink-secondary' : 'text-primary-600'
+            }`}
             numberOfLines={1}
           >
-            {address}
+            {address ?? addressPlaceholder}
           </Text>
         </View>
       </Pressable>
 
-      {/* Уведомления */}
+      {}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={

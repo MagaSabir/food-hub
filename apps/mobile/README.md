@@ -1,50 +1,24 @@
-# Welcome to your Expo app 👋
+# @foodhub/mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native + **Expo** (Expo Router) — клиентское приложение (Feature-Sliced Design).
+Стили — NativeWind. Каркас — **шаг 0.7** (см. `foodhub-specs-v2/13-build-plan.md`).
+Спека — `foodhub-specs-v2/04-mobile-app.md`.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Запуск (dev)
 
 ```bash
-npm run reset-project
+pnpm --filter @foodhub/mobile dev      # expo start
+# затем: сканировать QR в Expo Go (SDK 54) на телефоне, либо w — web, i/a — эмулятор
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## SDK
 
-## Learn more
+Сейчас **SDK 54** — ради Expo Go на физическом устройстве (в сторах Expo Go пока 54).
+Апгрейд до 57 — позже (первый dev build / перед деплоем). См. шаг 0.7.1 в билд-плане.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Проверка
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+pnpm --filter @foodhub/mobile build    # tsc --noEmit (типы)
+pnpm --filter @foodhub/mobile lint      # expo lint
+```

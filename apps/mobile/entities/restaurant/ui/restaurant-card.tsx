@@ -1,23 +1,29 @@
-import { Pressable, View, Text } from 'react-native';
+import type { ReactNode } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import { logoBadgeShadow } from '@/shared/lib/surface';
 import {
   ClockIcon,
+  MapPinIcon,
+  StorefrontIcon,
   LightningIcon,
   MopedIcon,
   StarIcon,
 } from 'phosphor-react-native';
+import type { DeliveryLabel } from '../lib/delivery-label';
 
 export interface RestaurantCardProps {
   name: string;
-  cuisine: string; // «Итальянская • Пицца • Паста»
+  cuisine: string;
   rating: number;
-  reviewsCount: number; // сколько отзывов — рядом с рейтингом: «4.8 (124)»
-  deliveryTime: string; // «30–40 мин»
-  deliveryFee: string; // «149 ₽»; показываем, когда нет freeDeliveryFrom
-  freeDeliveryFrom?: string; // «500 ₽» → зелёное «Бесплатно от 500 ₽» (freeDeliveryMinOrder)
-  isFastDelivery?: boolean; // плашка «⚡ Быстрая доставка» на фото
-  imageUrl?: string | null; // фото-баннер
-  logoUrl?: string | number | null; // URL с бэка, локальный require (в т.ч .svg) или null
+  reviewsCount: number;
+  deliveryTime: string;
+  distanceLabel?: string | null;
+  delivery: DeliveryLabel;
+  isFastDelivery?: boolean;
+  imageUrl?: string | null;
+  logoUrl?: string | number | null;
+  action?: ReactNode;
   onPress?: () => void;
 }
 
@@ -38,40 +44,30 @@ const cardShadow = {
   elevation: 3,
 };
 
-const logoShadow = {
-  shadowColor: '#000000',
-  shadowOpacity: 0.16,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 5 }, // тень уходит вниз, под бейдж
-  elevation: 6,
-};
-
 export function RestaurantCard({
   name,
   cuisine,
   rating,
   reviewsCount,
   deliveryTime,
-  deliveryFee,
-  freeDeliveryFrom,
+  distanceLabel = null,
+  delivery,
   isFastDelivery = false,
   imageUrl,
   logoUrl,
+  action,
   onPress,
 }: RestaurantCardProps) {
-  // Единая подпись карточки для озвучки — иначе VoiceOver прочитает все внутренние
-  // тексты вразнобой. Собираем в осмысленную фразу.
   const a11yLabel = [
     name,
     cuisine,
     reviewsCount > 0
       ? `рейтинг ${rating.toFixed(1)}, ${reviewsCount} отзывов`
       : 'нет отзывов',
-    deliveryTime,
-    freeDeliveryFrom
-      ? `бесплатная доставка от ${freeDeliveryFrom}`
-      : `доставка ${deliveryFee}`,
+    distanceLabel ?? deliveryTime,
+    `доставка: ${delivery.short}`,
   ].join('. ');
+
   return (
     <Pressable
       onPress={onPress}
@@ -88,8 +84,11 @@ export function RestaurantCard({
             contentFit="cover"
           />
         ) : null}
+        {action ? (
+          <View className="absolute right-2.5 top-2.5">{action}</View>
+        ) : null}
         {isFastDelivery ? (
-          <View className="absolute left-2.5 top-2.5 flex-row items-center gap-1 rounded-full bg-white/70 px-2 py-1">
+          <View className="absolute left-2.5 top-2.5 flex-row items-center gap-1 rounded-full bg-white/85 px-2 py-1">
             <LightningIcon size={12} color="#49B85D" weight="fill" />
             <Text className="text-[12px] font-semibold text-ink">
               Быстрая доставка
@@ -99,14 +98,14 @@ export function RestaurantCard({
       </View>
 
       <View className="flex-row gap-4 px-3 pb-3">
+        {}
         <View
           className="-mt-[37.5px] h-[75px] w-[75px] rounded-logo border border-hairline bg-white"
-          style={logoShadow}
+          style={logoBadgeShadow}
         >
           <View className="h-full w-full items-center justify-center overflow-hidden rounded-logo bg-white p-2">
             {logoUrl ? (
               <Image
-                // Локальный ассет (require → число) отдаём как есть, URL — как {uri}.
                 source={
                   typeof logoUrl === 'number' ? logoUrl : { uri: logoUrl }
                 }
@@ -114,7 +113,7 @@ export function RestaurantCard({
                 contentFit="contain"
               />
             ) : (
-              <Text className="text-[27px] font-extrabold text-ink">
+              <Text className="text-[17px] font-extrabold text-ink">
                 {initials(name)}
               </Text>
             )}
@@ -122,6 +121,7 @@ export function RestaurantCard({
         </View>
 
         <View className="flex-1 pt-2.5">
+          {}
           <View className="flex-row items-start justify-between gap-2">
             <View className="flex-1">
               <Text
@@ -137,10 +137,11 @@ export function RestaurantCard({
                 {cuisine}
               </Text>
             </View>
+
             {reviewsCount > 0 ? (
               <View className="items-end">
                 <View className="flex-row items-center gap-1">
-                  <StarIcon size={12} color="#49B85D" weight="fill" />
+                  <StarIcon size={12} color="#FFB800" weight="fill" />
                   <Text className="text-[12px] font-semibold text-ink">
                     {rating.toFixed(1)}
                   </Text>
@@ -156,28 +157,33 @@ export function RestaurantCard({
             )}
           </View>
 
+          {}
           <View className="mt-1.5 flex-row items-center gap-1">
-            <ClockIcon size={12} color="#6E6E73" />
+            {distanceLabel ? (
+              <MapPinIcon size={12} color="#6E6E73" />
+            ) : (
+              <ClockIcon size={12} color="#6E6E73" />
+            )}
             <Text className="text-[12px] font-semibold text-ink-secondary">
-              {deliveryTime}
+              {distanceLabel ?? deliveryTime}
             </Text>
             <Text className="text-[12px] text-ink-placeholder">•</Text>
-            <MopedIcon
-              size={13}
-              color={freeDeliveryFrom ? '#49B85D' : '#6E6E73'}
-            />
-            {freeDeliveryFrom ? (
-              <Text className="shrink text-[12px] font-semibold text-primary-500">
-                Бесплатно от {freeDeliveryFrom}
-              </Text>
+            {delivery.pickupOnly ? (
+              <StorefrontIcon size={13} color="#6E6E73" />
             ) : (
-              <Text
-                className="shrink text-[12px] font-semibold text-ink"
-                numberOfLines={1}
-              >
-                {deliveryFee}
-              </Text>
+              <MopedIcon
+                size={13}
+                color={delivery.accent ? '#49B85D' : '#6E6E73'}
+              />
             )}
+            <Text
+              className={`shrink text-[12px] font-semibold ${
+                delivery.accent ? 'text-primary-500' : 'text-ink'
+              }`}
+              numberOfLines={1}
+            >
+              {delivery.short}
+            </Text>
           </View>
         </View>
       </View>
