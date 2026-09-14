@@ -16,7 +16,9 @@ import { buildThrottlerOptions } from './setup/throttler-options.factory';
 import { HealthModule } from './health/health.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { MenuModule } from './menu/menu.module';
+import { SearchModule } from './search/search.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { AddressesModule } from './addresses/addresses.module';
 import { OrdersModule } from './orders/orders.module';
 import { AuthModule } from './auth/auth.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -55,7 +57,9 @@ const NODE_ENV = process.env.NODE_ENV ?? 'development';
     HealthModule,
     RestaurantsModule,
     MenuModule,
+    SearchModule,
     FavoritesModule,
+    AddressesModule,
     OrdersModule,
     AuthModule,
     RealtimeModule,

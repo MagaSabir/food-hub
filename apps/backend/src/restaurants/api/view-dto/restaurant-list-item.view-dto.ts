@@ -29,6 +29,14 @@ export class RestaurantListItemViewDto implements RestaurantListItem {
   @ApiProperty({ nullable: true, type: String, example: null })
   logoUrl!: string | null;
 
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    example: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
+    description: 'Обложка карточки — первое фото; null, если фото не залиты',
+  })
+  coverUrl!: string | null;
+
   @ApiProperty({ type: [String], example: ['суши', 'роллы'] })
   cuisineTypes!: string[];
 
@@ -67,6 +75,25 @@ export class RestaurantListItemViewDto implements RestaurantListItem {
   })
   freeDeliveryFrom!: number | null;
 
+  @ApiProperty({
+    nullable: true,
+    type: Boolean,
+    example: true,
+    description:
+      'Возит ли бренд по выбранному адресу. null — адрес не передан. ' +
+      'false — сюда не возят, остаётся самовывоз (карточку не прячем).',
+  })
+  deliversToAddress!: boolean | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    example: 2.4,
+    description:
+      'Расстояние до ближайшей точки, км (по прямой). null — адреса нет.',
+  })
+  distanceKm!: number | null;
+
   static mapToView(
     r: Restaurant,
     computed: { isOpen: boolean } & DeliveryPromise,
@@ -77,6 +104,7 @@ export class RestaurantListItemViewDto implements RestaurantListItem {
     dto.slug = r.slug;
     dto.description = r.description;
     dto.logoUrl = r.logoUrl;
+    dto.coverUrl = r.photos[0] ?? null;
     dto.cuisineTypes = r.cuisineTypes;
     dto.ratingFood = r.ratingFood.toNumber();
     dto.ratingDelivery = r.ratingDelivery.toNumber();
@@ -84,6 +112,8 @@ export class RestaurantListItemViewDto implements RestaurantListItem {
     dto.isOpen = computed.isOpen;
     dto.deliveryFeeFrom = computed.deliveryFeeFrom;
     dto.freeDeliveryFrom = computed.freeDeliveryFrom;
+    dto.deliversToAddress = null;
+    dto.distanceKm = null;
     return dto;
   }
 }

@@ -1,20 +1,11 @@
-export interface WorkingInterval {
-  from: string;
-  to: string;
-}
+import {
+  WEEKDAYS,
+  type Weekday,
+  type WorkingHours,
+  type WorkingInterval,
+} from '@foodhubme/shared';
 
-export const WEEKDAYS = [
-  'mon',
-  'tue',
-  'wed',
-  'thu',
-  'fri',
-  'sat',
-  'sun',
-] as const;
-export type Weekday = (typeof WEEKDAYS)[number];
-
-export type WorkingHours = Partial<Record<Weekday, WorkingInterval[]>>;
+export { WEEKDAYS, type Weekday, type WorkingHours, type WorkingInterval };
 
 export interface OpenState {
   isOpen: boolean;

@@ -17,6 +17,15 @@ export class RestaurantDetailsViewDto
   })
   branches!: BranchViewDto[];
 
+  @ApiProperty({
+    type: [String],
+    description:
+      'Фото заведения: photos[0] — та же обложка, что в coverUrl, дальше ' +
+      'галерея. Пустой массив — партнёр фото не залил.',
+    example: ['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4'],
+  })
+  photos!: string[];
+
   static mapToDetails(
     r: Restaurant,
     branches: BranchViewDto[],
@@ -30,6 +39,7 @@ export class RestaurantDetailsViewDto
       }),
     );
     dto.branches = branches;
+    dto.photos = r.photos;
     return dto;
   }
 }

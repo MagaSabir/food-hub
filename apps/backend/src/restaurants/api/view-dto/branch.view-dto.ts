@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { Branch, City } from '@prisma/client';
-import type { BranchInfo } from '@foodhubme/shared';
-import { OpenState } from '../../domain/rules/working-hours';
+import type { BranchInfo, WorkingHours } from '@foodhubme/shared';
+import { OpenState, parseWorkingHours } from '../../domain/rules/working-hours';
 
 export type BranchWithCity = Branch & { city: Pick<City, 'name'> };
 
@@ -46,6 +46,17 @@ export class BranchViewDto implements BranchInfo {
   })
   closesAt!: string | null;
 
+  @ApiProperty({
+    description:
+      'Недельный график: ключ — день (mon…sun), значение — интервалы работы. ' +
+      'Дня нет или он пуст — выходной. Уже разобран и проверен сервером.',
+    example: {
+      mon: [{ from: '10:00', to: '22:00' }],
+      sat: [{ from: '10:00', to: '23:00' }],
+    },
+  })
+  workingHours!: WorkingHours;
+
   @ApiProperty({ example: true, description: 'Тумблер приёма заказов' })
   acceptingOrders!: boolean;
 
@@ -83,6 +94,7 @@ export class BranchViewDto implements BranchInfo {
     dto.longitude = b.longitude;
     dto.isOpen = openState.isOpen;
     dto.closesAt = openState.closesAt;
+    dto.workingHours = parseWorkingHours(b.workingHours);
     dto.acceptingOrders = b.acceptingOrders;
     dto.hasDelivery = b.hasDelivery;
     dto.hasPickup = b.hasPickup;

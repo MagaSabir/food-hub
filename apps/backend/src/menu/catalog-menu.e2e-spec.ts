@@ -4,11 +4,14 @@ import { ErrorCodes } from '@foodhubme/shared';
 import request from 'supertest';
 import { AppModule } from '../app.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { CacheService } from '../redis/cache.service';
+import { CacheKeys } from '../redis/cache-keys';
 import { applyAppInitialization } from '../setup/app-initialization';
 
 describe('Каталог и меню (e2e)', () => {
   let app: NestExpressApplication;
   let prisma: PrismaService;
+  let cache: CacheService;
 
   const SUFFIX = Math.random().toString(36).slice(2, 8);
   const CITY = `e2e-city-${SUFFIX}`;
@@ -53,6 +56,7 @@ describe('Каталог и меню (e2e)', () => {
     await app.init();
 
     prisma = app.get(PrismaService);
+    cache = app.get(CacheService);
 
     const city = await prisma.client.city.create({
       data: { name: CITY, slug: CITY },
@@ -73,6 +77,9 @@ describe('Каталог и меню (e2e)', () => {
             minOrderAmount: 500,
             deliveryBaseFee: 149,
             freeDeliveryMinOrder: 1500,
+            latitude: 43.3169,
+            longitude: 45.6981,
+            deliveryMaxRadiusKm: 5,
           },
         },
       },
@@ -291,6 +298,56 @@ describe('Каталог и меню (e2e)', () => {
       );
     });
 
+    describe('адрес доставки (Шаг 7.0б)', () => {
+      const ONLY_OURS = `cuisine=${encodeURIComponent(CUISINE)}`;
+      const NEAR = `${ONLY_OURS}&lat=43.3200&lng=45.6981`;
+      const FAR = `${ONLY_OURS}&lat=43.4159&lng=45.6981`;
+
+      interface CatalogCard {
+        slug: string;
+        deliversToAddress: boolean | null;
+        distanceKm: number | null;
+      }
+
+      const find = (body: CatalogCard[]) =>
+        body.find((r) => r.slug === OPEN_BRAND);
+
+      it('без координат поля пустые — вопрос не задавали', async () => {
+        const res = await api()
+          .get(`/api/restaurants?${ONLY_OURS}`)
+          .expect(200);
+
+        expect(find(res.body)).toMatchObject({
+          deliversToAddress: null,
+          distanceKm: null,
+        });
+      });
+
+      it('адрес в зоне → возит, и видно расстояние', async () => {
+        const res = await api().get(`/api/restaurants?${NEAR}`).expect(200);
+
+        const brand = find(res.body);
+        expect(brand?.deliversToAddress).toBe(true);
+        expect(brand?.distanceKm).toBeGreaterThan(0);
+        expect(brand?.distanceKm).toBeLessThan(5);
+      });
+
+      it('адрес вне зоны → бренд ОСТАЁТСЯ в списке с пометкой', async () => {
+        const res = await api().get(`/api/restaurants?${FAR}`).expect(200);
+
+        expect(find(res.body)).toMatchObject({ deliversToAddress: false });
+      });
+
+      it('одна координата без второй → 400', async () => {
+        await api().get('/api/restaurants?lat=43.3200').expect(400);
+        await api().get('/api/restaurants?lng=45.6981').expect(400);
+      });
+
+      it('координаты за пределами планеты → 400', async () => {
+        await api().get('/api/restaurants?lat=100&lng=45.6981').expect(400);
+      });
+    });
+
     it('неизвестный sort → 400 VALIDATION_ERROR', async () => {
       const res = await api()
         .get('/api/restaurants?sort=по-настроению')
@@ -317,6 +374,50 @@ describe('Каталог и меню (e2e)', () => {
         freeDeliveryMinOrder: 1500,
       });
       expect(res.body.branches[0]).not.toHaveProperty('deliveryPerKm');
+    });
+
+    it('отдаёт НЕДЕЛЬНЫЙ график — из него экран «о заведении»', async () => {
+      const res = await api()
+        .get(`/api/restaurants/by-slug/${OPEN_BRAND}`)
+        .expect(200);
+
+      expect(res.body.branches[0].workingHours).toEqual(alwaysOpen);
+    });
+
+    it('кривой график не роняет ответ — сервер отдаёт разобранное', async () => {
+      const brand = await prisma.client.restaurant.findUnique({
+        where: { slug: OPEN_BRAND },
+        select: { branches: { select: { id: true } } },
+      });
+      const branchId = brand!.branches[0].id;
+
+      await prisma.client.branch.update({
+        where: { id: branchId },
+        data: {
+          workingHours: {
+            mon: [{ from: '10:00', to: '22:00' }],
+            tue: 'не массив вовсе',
+            wed: [{ from: '25:00', to: '99:99' }],
+            sat: [{ from: '10:00', to: '10:00' }],
+          },
+        },
+      });
+
+      await cache.invalidate(CacheKeys.restaurant(OPEN_BRAND));
+
+      const res = await api()
+        .get(`/api/restaurants/by-slug/${OPEN_BRAND}`)
+        .expect(200);
+
+      expect(res.body.branches[0].workingHours).toEqual({
+        mon: [{ from: '10:00', to: '22:00' }],
+      });
+
+      await prisma.client.branch.update({
+        where: { id: branchId },
+        data: { workingHours: alwaysOpen },
+      });
+      await cache.invalidate(CacheKeys.restaurant(OPEN_BRAND));
     });
 
     it('несуществующий slug → 404 RESTAURANT_NOT_FOUND', async () => {

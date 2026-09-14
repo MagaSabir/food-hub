@@ -21,3 +21,10 @@ export function distanceKm(from: GeoPoint, to: GeoPoint): number {
 
   return Math.round(km * 100) / 100;
 }
+
+export function isWithinRadius(
+  distanceKm: number,
+  radiusKm: number | null,
+): boolean {
+  return radiusKm === null || distanceKm <= radiusKm;
+}

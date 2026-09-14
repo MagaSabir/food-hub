@@ -1,10 +1,31 @@
 
+export const RESTAURANT_TIMEZONE = 'Europe/Moscow';
+
+export interface WorkingInterval {
+  from: string;
+  to: string;
+}
+
+export const WEEKDAYS = [
+  'mon',
+  'tue',
+  'wed',
+  'thu',
+  'fri',
+  'sat',
+  'sun',
+] as const;
+export type Weekday = (typeof WEEKDAYS)[number];
+
+export type WorkingHours = Partial<Record<Weekday, WorkingInterval[]>>;
+
 export interface RestaurantListItem {
   id: string;
   name: string;
   slug: string;
   description: string | null;
   logoUrl: string | null;
+  coverUrl: string | null;
   cuisineTypes: string[];
   ratingFood: number;
   ratingDelivery: number;
@@ -12,6 +33,10 @@ export interface RestaurantListItem {
   isOpen: boolean;
 
   deliveryFeeFrom: number | null;
+
+  deliversToAddress: boolean | null;
+
+  distanceKm: number | null;
 
   freeDeliveryFrom: number | null;
 }
@@ -26,6 +51,7 @@ export interface BranchInfo {
   longitude: number | null;
   isOpen: boolean;
   closesAt: string | null;
+  workingHours: WorkingHours;
   acceptingOrders: boolean;
   hasDelivery: boolean;
   hasPickup: boolean;
@@ -37,6 +63,7 @@ export interface BranchInfo {
 
 export interface RestaurantDetails extends RestaurantListItem {
   branches: BranchInfo[];
+  photos: string[];
 }
 
 export interface AddFavoriteRequest {

@@ -1,13 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { CatalogSort } from '@foodhubme/shared';
+import type { GeoPoint } from '../../orders/domain/rules/distance';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../../redis/cache.service';
 import { CacheKeys, CacheTtl } from '../../redis/cache-keys';
+import {
+  CATALOG_CARD_BRANCH_SELECT,
+  toCatalogCard,
+} from '../api/view-dto/catalog-card';
 import { RestaurantListItemViewDto } from '../api/view-dto/restaurant-list-item.view-dto';
 import { RestaurantDetailsViewDto } from '../api/view-dto/restaurant-details.view-dto';
 import { BranchViewDto } from '../api/view-dto/branch.view-dto';
-import { deliveryPromise } from '../domain/rules/delivery-promise';
+import {
+  deliveryReach,
+  type ReachBranch,
+} from '../domain/rules/delivery-reach';
 import { getOpenState } from '../domain/rules/working-hours';
 import { VISIBLE_RESTAURANT } from '../domain/rules/visible-restaurant';
 import {
@@ -20,6 +28,11 @@ export interface CatalogFilters {
   cuisine?: string;
   city?: string;
   open?: boolean;
+}
+
+interface CatalogSnapshot {
+  cards: RestaurantListItemViewDto[];
+  reach: Record<string, ReachBranch[]>;
 }
 
 const ORDER_BY: Record<
@@ -39,9 +52,21 @@ export class RestaurantsQueryRepository {
     private readonly cache: CacheService,
   ) {}
 
-  findCatalog(
+  async findCatalog(
     filters: CatalogFilters = {},
+    destination: GeoPoint | null = null,
   ): Promise<RestaurantListItemViewDto[]> {
+    const snapshot = await this.snapshot(filters);
+
+    if (destination === null) return snapshot.cards;
+
+    return snapshot.cards.map((card) => ({
+      ...card,
+      ...deliveryReach(snapshot.reach[card.id] ?? [], destination),
+    }));
+  }
+
+  private snapshot(filters: CatalogFilters): Promise<CatalogSnapshot> {
     const isDefaultQuery =
       !filters.sort &&
       !filters.cuisine &&
@@ -55,9 +80,7 @@ export class RestaurantsQueryRepository {
     );
   }
 
-  private async loadCatalog(
-    filters: CatalogFilters,
-  ): Promise<RestaurantListItemViewDto[]> {
+  private async loadCatalog(filters: CatalogFilters): Promise<CatalogSnapshot> {
     const branchFilter: Prisma.BranchWhereInput = {
       isActive: true,
       ...(filters.city ? { city: { slug: filters.city } } : {}),
@@ -74,32 +97,34 @@ export class RestaurantsQueryRepository {
         branches: {
           where: branchFilter,
           select: {
-            workingHours: true,
-            hasDelivery: true,
-            deliveryBaseFee: true,
-            freeDeliveryMinOrder: true,
+            ...CATALOG_CARD_BRANCH_SELECT,
+            latitude: true,
+            longitude: true,
+            deliveryMaxRadiusKm: true,
           },
         },
       },
     });
 
     const now = new Date();
-    const items = rows.map((r) =>
-      RestaurantListItemViewDto.mapToView(r, {
-        isOpen: r.branches.some(
-          (b) => getOpenState(b.workingHours, now, RESTAURANT_TIMEZONE).isOpen,
-        ),
-        ...deliveryPromise(
-          r.branches.map((b) => ({
-            hasDelivery: b.hasDelivery,
-            deliveryBaseFee: b.deliveryBaseFee.toNumber(),
-            freeDeliveryMinOrder: b.freeDeliveryMinOrder?.toNumber() ?? null,
-          })),
-        ),
-      }),
-    );
+    const items = rows.map((r) => toCatalogCard(r, now));
 
-    return filters.open ? items.filter((item) => item.isOpen) : items;
+    const cards = filters.open ? items.filter((item) => item.isOpen) : items;
+
+    return {
+      cards,
+      reach: Object.fromEntries(
+        rows.map((r) => [
+          r.id,
+          r.branches.map((b) => ({
+            latitude: b.latitude,
+            longitude: b.longitude,
+            hasDelivery: b.hasDelivery,
+            deliveryMaxRadiusKm: b.deliveryMaxRadiusKm?.toNumber() ?? null,
+          })),
+        ]),
+      ),
+    };
   }
 
   findDetailsBySlug(slug: string): Promise<RestaurantDetailsViewDto | null> {

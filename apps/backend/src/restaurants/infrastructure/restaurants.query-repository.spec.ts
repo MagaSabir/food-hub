@@ -23,6 +23,7 @@ const brand = {
   slug: 'vasabi',
   description: 'Суши',
   logoUrl: null,
+  photos: [],
   cuisineTypes: ['суши', 'роллы'],
   ratingFood: decimal(4.7),
   ratingDelivery: decimal(4.5),
@@ -104,6 +105,9 @@ describe('RestaurantsQueryRepository', () => {
               hasDelivery: true,
               deliveryBaseFee: true,
               freeDeliveryMinOrder: true,
+              latitude: true,
+              longitude: true,
+              deliveryMaxRadiusKm: true,
             },
           },
         },
@@ -123,6 +127,7 @@ describe('RestaurantsQueryRepository', () => {
           slug: 'vasabi',
           description: 'Суши',
           logoUrl: null,
+          coverUrl: null,
           cuisineTypes: ['суши', 'роллы'],
           ratingFood: 4.7,
           ratingDelivery: 4.5,
@@ -130,9 +135,101 @@ describe('RestaurantsQueryRepository', () => {
           isOpen: true,
           deliveryFeeFrom: 149,
           freeDeliveryFrom: 1500,
+          deliversToAddress: null,
+          distanceKm: null,
         },
       ]);
       expect(typeof result[0].ratingFood).toBe('number');
+    });
+
+    it('обложка карточки — ПЕРВОЕ фото бренда', async () => {
+      const { repo } = makeRepo([
+        {
+          ...brand,
+          photos: ['https://cdn/first.jpg', 'https://cdn/second.jpg'],
+          branches: [catalogBranch(alwaysOpen)],
+        },
+      ]);
+
+      const [card] = await repo.findCatalog();
+
+      expect(card.coverUrl).toBe('https://cdn/first.jpg');
+      expect(card).not.toHaveProperty('photos');
+    });
+
+    describe('адрес доставки (Шаг 7.0б)', () => {
+      const HOME = { latitude: 43.3169, longitude: 45.6981 };
+
+      const near = (over: Record<string, unknown> = {}) =>
+        catalogBranch(alwaysOpen, {
+          latitude: 43.3349,
+          longitude: 45.6981,
+          deliveryMaxRadiusKm: decimal(5),
+          ...over,
+        });
+
+      it('без адреса поля остаются пустыми — вопрос не задавали', async () => {
+        const { repo } = makeRepo([{ ...brand, branches: [near()] }]);
+
+        const [card] = await repo.findCatalog();
+
+        expect(card.deliversToAddress).toBeNull();
+        expect(card.distanceKm).toBeNull();
+      });
+
+      it('с адресом отмечает, что бренд сюда возит', async () => {
+        const { repo } = makeRepo([{ ...brand, branches: [near()] }]);
+
+        const [card] = await repo.findCatalog({}, HOME);
+
+        expect(card.deliversToAddress).toBe(true);
+        expect(card.distanceKm).toBeCloseTo(2, 0);
+      });
+
+      it('бренд вне радиуса НЕ пропадает из списка, а помечается', async () => {
+        const { repo } = makeRepo([
+          {
+            ...brand,
+            branches: [near({ latitude: 43.4159, longitude: 45.6981 })],
+          },
+        ]);
+
+        const cards = await repo.findCatalog({}, HOME);
+
+        expect(cards).toHaveLength(1);
+        expect(cards[0].deliversToAddress).toBe(false);
+      });
+
+      it('координаты адреса в ключ кеша НЕ попадают', async () => {
+        const { repo, wrap } = makeRepo([{ ...brand, branches: [near()] }]);
+
+        await repo.findCatalog({}, HOME);
+
+        expect(wrap).toHaveBeenCalledWith(
+          CacheKeys.catalog(),
+          expect.any(Number),
+          expect.any(Function),
+        );
+      });
+
+      it('кешированный снимок не портится чужим адресом', async () => {
+        const rows = [{ ...brand, branches: [near()] }];
+        const { repo, wrap } = makeRepo(rows);
+        let snapshot: unknown = null;
+        wrap.mockImplementation(
+          async (_k: string, _t: number, loader: () => Promise<unknown>) => {
+            snapshot ??= await loader();
+            return snapshot;
+          },
+        );
+
+        const far = { latitude: 43.9, longitude: 45.6981 };
+        const [mine] = await repo.findCatalog({}, HOME);
+        const [other] = await repo.findCatalog({}, far);
+
+        expect(mine.deliversToAddress).toBe(true);
+        expect(other.deliversToAddress).toBe(false);
+      });
     });
 
     it('бренд закрыт, если закрыты ВСЕ его точки', async () => {

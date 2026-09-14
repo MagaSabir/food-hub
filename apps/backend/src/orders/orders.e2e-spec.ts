@@ -612,6 +612,67 @@ describe('Оформление заказа (e2e)', () => {
       expect(res.body.code).toBe(ErrorCodes.ORDER_NOT_FOUND);
     });
 
+    describe('повтор заказа (Шаг 7.1г)', () => {
+      it('гость без токена → 401', async () => {
+        await api().get(`/api/orders/${myOrderId}/repeat`).expect(401);
+      });
+
+      it('ИЗОЛЯЦИЯ: чужой заказ не повторить → 404', async () => {
+        await api()
+          .get(`/api/orders/${myOrderId}/repeat`)
+          .set('Authorization', `Bearer ${tokens.bob}`)
+          .expect(404);
+      });
+
+      it('состав из чека, а цены — СЕГОДНЯШНИЕ', async () => {
+        const res = await asAlice(
+          api().get(`/api/orders/${myOrderId}/repeat`),
+        ).expect(200);
+
+        expect(res.body.restaurantId).toBe(ids.brand);
+        expect(res.body.items).toHaveLength(1);
+
+        const item = res.body.items[0] as {
+          menuItemId: string;
+          price: number;
+          quantity: number;
+          options: { name: string; groupName: string }[];
+        };
+        const dish = await api()
+          .get(`/api/menu-items/${item.menuItemId}`)
+          .expect(200);
+        expect(item.price).toBe(dish.body.price);
+        expect(item.quantity).toBe(1);
+        expect(item.options).toEqual([
+          expect.objectContaining({ name: '25 см', groupName: 'Размер' }),
+        ]);
+        expect(res.body.skipped).toEqual([]);
+      });
+
+      it('блюдо в стоп-листе → уезжает в skipped с UNAVAILABLE', async () => {
+        await prisma.client.menuItem.update({
+          where: { id: ids.pizzaWithSize },
+          data: { isAvailable: false },
+        });
+
+        try {
+          const res = await asAlice(
+            api().get(`/api/orders/${myOrderId}/repeat`),
+          ).expect(200);
+
+          expect(res.body.items).toEqual([]);
+          expect(res.body.skipped).toEqual([
+            { name: 'Пицца Пепперони', reason: 'UNAVAILABLE' },
+          ]);
+        } finally {
+          await prisma.client.menuItem.update({
+            where: { id: ids.pizzaWithSize },
+            data: { isAvailable: true },
+          });
+        }
+      });
+    });
+
     it('сотрудник ресторана в историю клиента не ходит → 403', async () => {
       await api()
         .get('/api/orders/mine')

@@ -17,6 +17,10 @@ describe('Избранное (e2e)', () => {
   const BRAND = `e2e-fav-${SUFFIX}`;
   const HIDDEN_BRAND = `e2e-fav-hidden-${SUFFIX}`;
 
+  const HEX_TAIL = Math.floor(Math.random() * 0xffffffffffff)
+    .toString(16)
+    .padStart(12, '0');
+
   const ids = { city: '', brand: '', hiddenBrand: '', alice: '', bob: '' };
   const tokens = { alice: '', bob: '', staff: '' };
 
@@ -52,6 +56,7 @@ describe('Избранное (e2e)', () => {
 
     const brand = await prisma.client.restaurant.create({
       data: {
+        id: `22222222-1111-1111-1111-${HEX_TAIL}`,
         name: `E2E Избранное ${SUFFIX}`,
         slug: BRAND,
         cuisineTypes: [`e2e-${SUFFIX}`],

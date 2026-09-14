@@ -289,6 +289,74 @@ describe('Auth (e2e)', () => {
     });
   });
 
+  describe('PATCH /api/auth/me — имя в профиле (Шаг 7.1а)', () => {
+    it('гость без токена → 401', async () => {
+      await api().patch('/api/auth/me').send({ name: 'Магомед' }).expect(401);
+    });
+
+    it('админ платформы → 403: профиль есть только у клиента', async () => {
+      const admin = await api().post('/api/auth/login').send(ADMIN).expect(200);
+
+      const res = await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${admin.body.accessToken}`)
+        .send({ name: 'Магомед' })
+        .expect(403);
+
+      expect(res.body.code).toBe('ACCESS_DENIED');
+    });
+
+    it('сохраняет имя и сразу отдаёт обновлённый профиль', async () => {
+      const tokens = await loginClient(newPhone());
+
+      const res = await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: 'Магомед' })
+        .expect(200);
+
+      expect(res.body).toMatchObject({ name: 'Магомед', role: 'CLIENT' });
+
+      const me = await api()
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .expect(200);
+      expect(me.body.name).toBe('Магомед');
+    });
+
+    it('пробелы по краям не считаются частью имени', async () => {
+      const tokens = await loginClient(newPhone());
+
+      const res = await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: '  Магомед  ' })
+        .expect(200);
+
+      expect(res.body.name).toBe('Магомед');
+    });
+
+    it('одни пробелы → 400 (обрезаем ДО проверки длины)', async () => {
+      const tokens = await loginClient(newPhone());
+
+      await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: '     ' })
+        .expect(400);
+    });
+
+    it('слишком длинное имя → 400', async () => {
+      const tokens = await loginClient(newPhone());
+
+      await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: 'М'.repeat(51) })
+        .expect(400);
+    });
+  });
+
   describe('вход клиента по телефону', () => {
     it('запрос кода → подтверждение → токены и профиль', async () => {
       const phone = newPhone();

@@ -9,6 +9,10 @@ export interface OtpRequested {
   expiresInSec: number;
 }
 
+export interface UpdateProfileRequest {
+  name: string;
+}
+
 export interface ClientAuthTokens {
   accessToken: string;
   refreshToken: string;

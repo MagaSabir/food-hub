@@ -9,9 +9,11 @@ import { GetMyOrdersQueryHandler } from './application/queries/get-my-orders.que
 import { GetRestaurantOrderByIdQueryHandler } from './application/queries/get-restaurant-order-by-id.query';
 import { GetRestaurantOrdersQueryHandler } from './application/queries/get-restaurant-orders.query';
 import { GetOrderByIdQueryHandler } from './application/queries/get-order-by-id.query';
+import { GetOrderRepeatQueryHandler } from './application/queries/get-order-repeat.query';
 import { ChangeOrderStatusUseCase } from './application/usecases/change-order-status.usecase';
 import { CreateOrderUseCase } from './application/usecases/create-order.usecase';
 import { OrdersQueryRepository } from './infrastructure/repositories/orders.query-repository';
+import { RepeatOrderQueryRepository } from './infrastructure/repositories/repeat-order.query-repository';
 import { RestaurantOrdersQueryRepository } from './infrastructure/repositories/restaurant-orders.query-repository';
 import { OrdersRepository } from './infrastructure/repositories/orders.repository';
 import { NotifyBranchOnOrderCreated } from './application/event-handlers/notify-branch-on-order-created.handler';
@@ -25,6 +27,7 @@ import { PushOnOrderStatusChanged } from './application/event-handlers/push-on-o
     GetDeliveryQuoteQueryHandler,
     GetMyOrdersQueryHandler,
     GetOrderByIdQueryHandler,
+    GetOrderRepeatQueryHandler,
     GetRestaurantOrdersQueryHandler,
     GetRestaurantOrderByIdQueryHandler,
     CreateOrderUseCase,
@@ -34,6 +37,7 @@ import { PushOnOrderStatusChanged } from './application/event-handlers/push-on-o
     PushOnOrderStatusChanged,
     OrdersRepository,
     OrdersQueryRepository,
+    RepeatOrderQueryRepository,
     RestaurantOrdersQueryRepository,
   ],
 })

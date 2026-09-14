@@ -24,6 +24,9 @@ model Restaurant {
   name          String
   description   String?
   logoUrl       String?  @map("logo_url")
+
+  photos        String[]
+
   cuisineTypes  String[] @map("cuisine_types")
   slug          String   @unique
   showInCatalog Boolean  @default(true) @map("show_in_catalog")
@@ -202,6 +205,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  addresses UserAddress[]
   devices   UserDevice[]
   favorites UserFavorite[]
   orders    Order[]
@@ -221,6 +225,28 @@ model UserFavorite {
   @@unique([userId, restaurantId])
   @@index([restaurantId])
   @@map("user_favorites")
+}
+
+model UserAddress {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  address String
+  details String?
+
+  locality String?
+
+  latitude  Float
+  longitude Float
+
+  isDefault Boolean @default(false) @map("is_default")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("user_addresses")
 }
 
 model UserDevice {

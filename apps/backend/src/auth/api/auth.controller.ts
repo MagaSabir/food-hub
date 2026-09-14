@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Res,
   UseGuards,
@@ -12,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Role } from '@prisma/client';
 import { Response } from 'express';
 import { CookieConfig } from '../../config';
 import { LoginCommand } from '../application/usecases/login.usecase';
@@ -30,7 +32,7 @@ import { CurrentRefreshSession } from './decorators/current-refresh-session.deco
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { ApiLogin } from './docs/login.docs';
-import { ApiMe } from './docs/me.docs';
+import { ApiMe, ApiUpdateProfile } from './docs/me.docs';
 import { ApiLogout, ApiRefreshTokens } from './docs/refresh.docs';
 import { ApiRequestOtp } from './docs/request-otp.docs';
 import { ApiVerifyOtp } from './docs/verify-otp.docs';
@@ -41,7 +43,10 @@ import { VerifyOtpInputDto } from './input-dto/verify-otp.input-dto';
 import { clearRefreshCookie, setRefreshCookie } from './refresh-cookie';
 import { AuthTokensViewDto } from './view-dto/auth-tokens.view-dto';
 import { ClientAuthTokensViewDto } from './view-dto/client-auth-tokens.view-dto';
+import { Roles } from './decorators/roles.decorator';
 import { MeViewDto } from './view-dto/me.view-dto';
+import { UpdateProfileInputDto } from './input-dto/update-profile.input-dto';
+import { UpdateProfileCommand } from '../application/usecases/update-profile.usecase';
 import { OtpRequestedViewDto } from './view-dto/otp-requested.view-dto';
 
 @ApiTags('auth')
@@ -140,6 +145,18 @@ export class AuthController {
   @ApiMe()
   me(@CurrentUser() user: AccessTokenPayload): Promise<MeViewDto> {
     return this.queryBus.execute(new GetMeQuery(user.sub, user.role));
+  }
+
+  @Patch('me')
+  @Roles(Role.CLIENT)
+  @ApiUpdateProfile()
+  updateProfile(
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() body: UpdateProfileInputDto,
+  ): Promise<MeViewDto> {
+    return this.commandBus.execute(
+      new UpdateProfileCommand(user.sub, body.name),
+    );
   }
 
   private respondWithTokens(

@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { isWithinRadius } from './distance';
 
 export interface DeliveryPricing {
   deliveryBaseFee: Prisma.Decimal;
@@ -25,8 +26,7 @@ export function calculateDeliveryFee(
   const distance = new Prisma.Decimal(distanceKm);
 
   if (
-    pricing.deliveryMaxRadiusKm !== null &&
-    distance.gt(pricing.deliveryMaxRadiusKm)
+    !isWithinRadius(distanceKm, pricing.deliveryMaxRadiusKm?.toNumber() ?? null)
   ) {
     return { deliverable: false };
   }

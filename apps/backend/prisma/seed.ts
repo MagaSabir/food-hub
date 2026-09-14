@@ -55,6 +55,8 @@ interface SeedRestaurant {
   slug: string;
   description: string;
   cuisineTypes: string[];
+  logoUrl: string;
+  photos: string[];
   ratingFood: number;
   ratingDelivery: number;
   reviewsCount: number;
@@ -65,6 +67,14 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000001',
     name: 'Сыроварня',
+    logoUrl:
+      'https://api.dicebear.com/9.x/icons/png?seed=syrovarnya&icon=award&backgroundColor=c62828&radius=20&size=256',
+    photos: [
+      'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200&q=80',
+      'https://images.unsplash.com/photo-1595854341625-f33ee10dbf94?w=1200&q=80',
+      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
+      'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&q=80',
+    ],
     slug: 'syrovarnya',
     description: 'Итальянская кухня и пицца на дровах',
     cuisineTypes: ['Итальянская', 'Пицца', 'Паста'],
@@ -107,6 +117,14 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000002',
     name: 'Tokyo Sushi',
+    logoUrl:
+      'https://api.dicebear.com/9.x/icons/png?seed=tokyo-sushi&icon=moonStars&backgroundColor=283593&radius=20&size=256',
+    photos: [
+      'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=1200&q=80',
+      'https://images.unsplash.com/photo-1553621042-f6e147245754?w=1200&q=80',
+      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80',
+      'https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=1200&q=80',
+    ],
     slug: 'tokyo-sushi',
     description: 'Суши и роллы, японская кухня',
     cuisineTypes: ['Суши', 'Роллы', 'Японская'],
@@ -137,6 +155,14 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000003',
     name: 'Black Star Burger',
+    logoUrl:
+      'https://api.dicebear.com/9.x/icons/png?seed=black-star-burger&icon=star&backgroundColor=111827&radius=20&size=256',
+    photos: [
+      'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&q=80',
+      'https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200&q=80',
+      'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1200&q=80',
+      'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=1200&q=80',
+    ],
     slug: 'black-star-burger',
     description: 'Бургеры и американская кухня',
     cuisineTypes: ['Бургеры', 'Американская'],
@@ -158,6 +184,14 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000004',
     name: 'Урарту',
+    logoUrl:
+      'https://api.dicebear.com/9.x/icons/png?seed=urartu&icon=gem&backgroundColor=b45309&radius=20&size=256',
+    photos: [
+      'https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&q=80',
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&q=80',
+      'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=1200&q=80',
+      'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=1200&q=80',
+    ],
     slug: 'urartu',
     description: 'Кавказская кухня, шашлык на углях',
     cuisineTypes: ['Кавказская', 'Шашлык'],
@@ -179,6 +213,14 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000005',
     name: 'Утро',
+    logoUrl:
+      'https://api.dicebear.com/9.x/icons/png?seed=utro&icon=sun&backgroundColor=f59e0b&radius=20&size=256',
+    photos: [
+      'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=1200&q=80',
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&q=80',
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1200&q=80',
+      'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1200&q=80',
+    ],
     slug: 'utro',
     description: 'Завтраки, кофе и выпечка весь день',
     cuisineTypes: ['Завтраки', 'Кофе', 'Выпечка'],
@@ -200,6 +242,14 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-2222-2222-2222-222222222222',
     name: 'Васаби',
+    logoUrl:
+      'https://api.dicebear.com/9.x/icons/png?seed=vasabi&icon=flower2&backgroundColor=4caf50&radius=20&size=256',
+    photos: [
+      'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=1200&q=80',
+      'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=1200&q=80',
+      'https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?w=1200&q=80',
+      'https://images.unsplash.com/photo-1606502281004-f86cf1282af5?w=1200&q=80',
+    ],
     slug: 'vasabi',
     description: 'Суши и роллы с доставкой по Грозному',
     cuisineTypes: ['Суши', 'Роллы'],
@@ -255,6 +305,8 @@ async function main(): Promise<void> {
         slug: r.slug,
         description: r.description,
         cuisineTypes: r.cuisineTypes,
+        logoUrl: r.logoUrl,
+        photos: r.photos,
         ratingFood: r.ratingFood,
         ratingDelivery: r.ratingDelivery,
         reviewsCount: r.reviewsCount,

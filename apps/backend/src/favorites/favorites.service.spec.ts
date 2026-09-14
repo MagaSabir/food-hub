@@ -33,6 +33,7 @@ const brand = {
   slug: 'vasabi',
   description: 'Суши',
   logoUrl: null,
+  photos: [],
   cuisineTypes: ['суши'],
   ratingFood: decimal(4.4),
   ratingDelivery: decimal(4.3),
@@ -92,6 +93,7 @@ describe('FavoritesService', () => {
           slug: 'vasabi',
           description: 'Суши',
           logoUrl: null,
+          coverUrl: null,
           cuisineTypes: ['суши'],
           ratingFood: 4.4,
           ratingDelivery: 4.3,
@@ -99,6 +101,8 @@ describe('FavoritesService', () => {
           isOpen: true,
           deliveryFeeFrom: 149,
           freeDeliveryFrom: 1500,
+          deliversToAddress: null,
+          distanceKm: null,
         },
       ]);
     });

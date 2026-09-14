@@ -25,6 +25,7 @@ import {
 } from '../application/queries/get-delivery-quote.query';
 import { GetMyOrdersQuery } from '../application/queries/get-my-orders.query';
 import { GetOrderByIdQuery } from '../application/queries/get-order-by-id.query';
+import { GetOrderRepeatQuery } from '../application/queries/get-order-repeat.query';
 import { CreateOrderCommand } from '../application/usecases/create-order.usecase';
 import { ApiCreateOrder } from './docs/create-order.docs';
 import { ApiGetDeliveryQuote } from './docs/get-delivery-quote.docs';
@@ -34,6 +35,8 @@ import { DeliveryQuoteInputDto } from './input-dto/delivery-quote.input-dto';
 import { DeliveryQuoteViewDto } from './view-dto/delivery-quote.view-dto';
 import { OrderListItemViewDto } from './view-dto/order-list-item.view-dto';
 import { OrderViewDto } from './view-dto/order.view-dto';
+import { ApiRepeatOrder } from './docs/repeat-order.docs';
+import { RepeatOrderViewDto } from './view-dto/repeat-order.view-dto';
 
 @ApiTags('orders')
 @Controller('orders')
@@ -112,6 +115,16 @@ export class OrdersController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<OrderViewDto> {
     return this.queryBus.execute(new GetOrderByIdQuery(user.sub, id));
+  }
+
+  @Roles(Role.CLIENT)
+  @Get(':id/repeat')
+  @ApiRepeatOrder()
+  repeat(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<RepeatOrderViewDto> {
+    return this.queryBus.execute(new GetOrderRepeatQuery(user.sub, id));
   }
 }
 

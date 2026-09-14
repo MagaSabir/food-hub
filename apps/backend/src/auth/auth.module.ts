@@ -15,6 +15,7 @@ import { LoginUseCase } from './application/usecases/login.usecase';
 import { LogoutUseCase } from './application/usecases/logout.usecase';
 import { RefreshTokenUseCase } from './application/usecases/refresh-token.usecase';
 import { RequestOtpUseCase } from './application/usecases/request-otp.usecase';
+import { UpdateProfileUseCase } from './application/usecases/update-profile.usecase';
 import { VerifyOtpUseCase } from './application/usecases/verify-otp.usecase';
 import {
   ACCESS_JWT_SERVICE,
@@ -82,6 +83,7 @@ const jwtProviders = [
     LogoutUseCase,
     RequestOtpUseCase,
     VerifyOtpUseCase,
+    UpdateProfileUseCase,
     GetMeQueryHandler,
     { provide: OTP_SENDER, useClass: QueuedOtpSender },
     { provide: OTP_CHANNEL, useClass: CompositeOtpSender },

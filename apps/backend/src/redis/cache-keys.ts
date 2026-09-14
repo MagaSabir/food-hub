@@ -1,4 +1,4 @@
-export const CACHE_PREFIX = 'cache:v2';
+export const CACHE_PREFIX = 'cache:v3';
 
 export const CacheKeys = {
   catalog: (): string => `${CACHE_PREFIX}:catalog`,

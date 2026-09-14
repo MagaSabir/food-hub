@@ -4,9 +4,12 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsLatitude,
+  IsLongitude,
   IsOptional,
   IsString,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CatalogQueryInputDto {
@@ -51,4 +54,23 @@ export class CatalogQueryInputDto {
   })
   @IsBoolean({ message: 'open: true или false' })
   open?: boolean;
+
+  @ApiPropertyOptional({
+    example: 43.317,
+    description:
+      'Широта адреса доставки. Вместе с lng: каталог отметит, какие бренды ' +
+      'сюда возят (deliversToAddress) и как далеко ближайшая точка. ' +
+      'Без координат поля приходят null — вопрос не задавался.',
+  })
+  @ValidateIf((dto: CatalogQueryInputDto) => dto.lng !== undefined)
+  @IsLatitude({ message: 'lat: широта нужна вместе с lng' })
+  lat?: number;
+
+  @ApiPropertyOptional({
+    example: 45.694,
+    description: 'Долгота адреса доставки. Работает только в паре с lat.',
+  })
+  @ValidateIf((dto: CatalogQueryInputDto) => dto.lat !== undefined)
+  @IsLongitude({ message: 'lng: долгота нужна вместе с lat' })
+  lng?: number;
 }

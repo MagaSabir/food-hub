@@ -14,6 +14,17 @@ export class UsersRepository {
     });
   }
 
+  async updateName(id: string, name: string): Promise<User | null> {
+    const { count } = await this.prisma.client.user.updateMany({
+      where: { id, deletedAt: null },
+      data: { name },
+    });
+
+    if (count === 0) return null;
+
+    return this.findActiveById(id);
+  }
+
   findActiveById(id: string): Promise<User | null> {
     return this.prisma.client.user.findFirst({
       where: { id, deletedAt: null },

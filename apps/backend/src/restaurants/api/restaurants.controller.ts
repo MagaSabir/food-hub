@@ -21,7 +21,12 @@ export class RestaurantsController {
   list(
     @Query() query: CatalogQueryInputDto,
   ): Promise<RestaurantListItemViewDto[]> {
-    return this.queryBus.execute(new GetRestaurantsQuery(query));
+    const destination =
+      query.lat !== undefined && query.lng !== undefined
+        ? { latitude: query.lat, longitude: query.lng }
+        : null;
+
+    return this.queryBus.execute(new GetRestaurantsQuery(query, destination));
   }
 
   @Public()

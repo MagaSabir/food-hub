@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RestaurantNotFoundError } from '../restaurants/domain/errors/restaurants.errors';
 import { RestaurantListItemViewDto } from '../restaurants/api/view-dto/restaurant-list-item.view-dto';
-import { deliveryPromise } from '../restaurants/domain/rules/delivery-promise';
-import { getOpenState } from '../restaurants/domain/rules/working-hours';
-import { RESTAURANT_TIMEZONE } from '../restaurants/domain/policies/catalog.policy';
+import {
+  CATALOG_CARD_BRANCH_SELECT,
+  toCatalogCard,
+} from '../restaurants/api/view-dto/catalog-card';
 
 @Injectable()
 export class FavoritesService {
@@ -22,12 +23,7 @@ export class FavoritesService {
           include: {
             branches: {
               where: { isActive: true },
-              select: {
-                workingHours: true,
-                hasDelivery: true,
-                deliveryBaseFee: true,
-                freeDeliveryMinOrder: true,
-              },
+              select: CATALOG_CARD_BRANCH_SELECT,
             },
           },
         },
@@ -35,20 +31,7 @@ export class FavoritesService {
     });
 
     const now = new Date();
-    return rows.map((row) =>
-      RestaurantListItemViewDto.mapToView(row.restaurant, {
-        isOpen: row.restaurant.branches.some(
-          (b) => getOpenState(b.workingHours, now, RESTAURANT_TIMEZONE).isOpen,
-        ),
-        ...deliveryPromise(
-          row.restaurant.branches.map((b) => ({
-            hasDelivery: b.hasDelivery,
-            deliveryBaseFee: b.deliveryBaseFee.toNumber(),
-            freeDeliveryMinOrder: b.freeDeliveryMinOrder?.toNumber() ?? null,
-          })),
-        ),
-      }),
-    );
+    return rows.map((row) => toCatalogCard(row.restaurant, now));
   }
 
   async add(userId: string, restaurantId: string): Promise<void> {
