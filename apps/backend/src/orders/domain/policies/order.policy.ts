@@ -15,4 +15,8 @@ export const OrderPolicy = {
   LONGITUDE_RANGE: { MIN: -180, MAX: 180 },
 
   HISTORY_LIMIT: 50,
+
+  PREP_MINUTES: { MIN: 1, MAX: 240 },
+
+  CANCEL_REASON: { MIN_LENGTH: 3, MAX_LENGTH: 500 },
 } as const;

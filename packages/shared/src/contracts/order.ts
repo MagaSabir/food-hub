@@ -104,6 +104,10 @@ export interface OrderView {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
 
+  prepMinutes: number | null;
+
+  cancelReason: string | null;
+
   items: OrderItemView[];
 }
 
@@ -117,6 +121,22 @@ export interface OrderListItemView {
   restaurantId: string;
   restaurantName: string;
   branchAddress: string;
+
+  itemsCount: number;
+  total: number;
+}
+
+export interface RestaurantOrderListItemView {
+  id: string;
+  orderNumber: number;
+  status: OrderStatus;
+  orderType: OrderType;
+  createdAt: string;
+
+  branchId: string;
+  branchAddress: string;
+
+  deliveryAddress: string | null;
 
   itemsCount: number;
   total: number;

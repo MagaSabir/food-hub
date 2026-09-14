@@ -40,16 +40,21 @@ export function calculateDeliveryFee(
     return { deliverable: true, fee: new Prisma.Decimal(0), isFree: true };
   }
 
+  const fee = regularFee(pricing, distance);
+
+  return { deliverable: true, fee, isFree: fee.isZero() };
+}
+
+function regularFee(
+  pricing: DeliveryPricing,
+  distance: Prisma.Decimal,
+): Prisma.Decimal {
   const extraKm = distance.minus(pricing.deliveryIncludedRadiusKm);
   const extraFee = extraKm.isPositive()
     ? extraKm.mul(pricing.deliveryPerKm)
     : new Prisma.Decimal(0);
 
-  return {
-    deliverable: true,
-    fee: roundUpToRuble(pricing.deliveryBaseFee.plus(extraFee)),
-    isFree: false,
-  };
+  return roundUpToRuble(pricing.deliveryBaseFee.plus(extraFee));
 }
 
 export function amountToFreeDelivery(
@@ -60,6 +65,9 @@ export function amountToFreeDelivery(
   if (pricing.freeDeliveryMinOrder === null) return null;
 
   const distance = new Prisma.Decimal(distanceKm);
+
+  if (regularFee(pricing, distance).isZero()) return null;
+
   if (
     pricing.freeDeliveryRadiusKm !== null &&
     distance.gt(pricing.freeDeliveryRadiusKm)

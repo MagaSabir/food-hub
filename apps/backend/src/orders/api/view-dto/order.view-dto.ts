@@ -135,6 +135,24 @@ export class OrderViewDto implements OrderView {
   @ApiProperty({ enum: PaymentStatus, example: PaymentStatus.PENDING })
   paymentStatus!: PaymentStatus;
 
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    example: 30,
+    description:
+      'Сколько минут готовят — обещание ресторана, данное при приёме. ' +
+      'null: ещё не приняли или отклонили.',
+  })
+  prepMinutes!: number | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    example: 'Закончилось тесто, сегодня пиццу не сделаем',
+    description: 'Почему отклонили. Заполнено только у CANCELLED.',
+  })
+  cancelReason!: string | null;
+
   @ApiProperty({ type: [OrderItemViewDto] })
   items!: OrderItemViewDto[];
 
@@ -155,6 +173,9 @@ export class OrderViewDto implements OrderView {
     dto.deliveryAddress = order.deliveryAddress;
     dto.deliveryDetails = order.deliveryDetails;
     dto.distanceKm = order.distanceKm?.toNumber() ?? null;
+
+    dto.prepMinutes = order.prepMinutes;
+    dto.cancelReason = order.cancelReason;
 
     dto.contactPhone = order.contactPhone;
     dto.comment = order.comment;

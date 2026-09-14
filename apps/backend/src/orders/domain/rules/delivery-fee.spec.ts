@@ -124,4 +124,34 @@ describe('amountToFreeDelivery', () => {
   it('адрес вне радиуса акции — null, а не «доберите»', () => {
     expect(amountToFreeDelivery(promo, 8, d(100))).toBeNull();
   });
+  describe('точка возит бесплатно всегда (base_fee = 0)', () => {
+    const free = (over: Partial<DeliveryPricing> = {}) =>
+      pricing({
+        deliveryBaseFee: d(0),
+        deliveryPerKm: d(0),
+        freeDeliveryMinOrder: d(1500),
+        ...over,
+      });
+
+    it('добирать не до чего — null, а не «доберите»', () => {
+      expect(amountToFreeDelivery(free(), 2, d(600))).toBeNull();
+    });
+
+    it('и сама доставка честно считается бесплатной', () => {
+      expect(calculateDeliveryFee(free(), 2, d(600))).toEqual({
+        deliverable: true,
+        fee: d(0),
+        isFree: true,
+      });
+    });
+
+    it('но если за километры всё же берут — обещание снова уместно', () => {
+      const paidByKm = free({ deliveryPerKm: d(20) });
+
+      expect(calculateDeliveryFee(paidByKm, 5, d(600))).toMatchObject({
+        fee: d(40),
+      });
+      expect(amountToFreeDelivery(paidByKm, 5, d(600))).toEqual(d(900));
+    });
+  });
 });

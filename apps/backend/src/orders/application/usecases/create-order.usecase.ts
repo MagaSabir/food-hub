@@ -1,5 +1,10 @@
 import { OrderBlockReason, OrderType, PaymentMethod } from '@foodhubme/shared';
-import { Command, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import {
+  Command,
+  CommandHandler,
+  EventBus,
+  ICommandHandler,
+} from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { InvalidAccessTokenError } from '../../../auth/domain/errors/auth.errors';
 import { RESTAURANT_TIMEZONE } from '../../../restaurants/domain/policies/catalog.policy';
@@ -12,6 +17,7 @@ import { calculateOrder } from '../../domain/rules/order-calculation';
 import { Placement } from '../../domain/rules/order-placement';
 import { OrdersRepository } from '../../infrastructure/repositories/orders.repository';
 import { CreateOrderDto } from '../dto/create-order.application.dto';
+import { OrderCreatedEvent } from '../events/order-created.event';
 
 export class CreateOrderCommand extends Command<OrderViewDto> {
   constructor(public readonly dto: CreateOrderDto) {
@@ -24,7 +30,10 @@ export class CreateOrderUseCase implements ICommandHandler<
   CreateOrderCommand,
   OrderViewDto
 > {
-  constructor(private readonly orders: OrdersRepository) {}
+  constructor(
+    private readonly orders: OrdersRepository,
+    private readonly events: EventBus,
+  ) {}
 
   async execute({ dto }: CreateOrderCommand): Promise<OrderViewDto> {
     if (dto.paymentMethod !== PaymentMethod.CASH) {
@@ -84,6 +93,16 @@ export class CreateOrderUseCase implements ICommandHandler<
       total,
       lines,
     });
+
+    this.events.publish(
+      new OrderCreatedEvent({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        restaurantId: order.restaurantId,
+        branchId: order.branchId,
+        createdAt: order.createdAt,
+      }),
+    );
 
     return OrderViewDto.mapToView(order);
   }

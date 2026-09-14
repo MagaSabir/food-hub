@@ -18,6 +18,7 @@ import { MenuModule } from './menu/menu.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { OrdersModule } from './orders/orders.module';
 import { AuthModule } from './auth/auth.module';
+import { RealtimeModule } from './realtime/realtime.module';
 import { AccessTokenGuard } from './auth/api/guards/access-token.guard';
 import { RolesGuard } from './auth/api/guards/roles.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -54,6 +55,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'development';
     FavoritesModule,
     OrdersModule,
     AuthModule,
+    RealtimeModule,
   ],
   controllers: [AppController],
   providers: [

@@ -85,6 +85,6 @@ const jwtProviders = [
     UsersRepository,
     PasswordHasher,
   ],
-  exports: [AccessTokenGuard, RolesGuard],
+  exports: [AccessTokenGuard, RolesGuard, AuthTokenService],
 })
 export class AuthModule {}

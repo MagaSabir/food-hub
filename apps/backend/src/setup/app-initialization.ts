@@ -5,6 +5,7 @@ import { setupCookie } from './cookie.setup';
 import { setupPipes } from './pipes.setup';
 import { setupGlobalPrefix } from './global-prefix.setup';
 import { setupSwagger } from './swagger.setup';
+import { setupWebsockets } from './websockets.setup';
 
 export function applyAppInitialization(app: INestApplication): void {
   const config = app.get(ConfigService);
@@ -14,4 +15,5 @@ export function applyAppInitialization(app: INestApplication): void {
   setupPipes(app);
   setupGlobalPrefix(app, config);
   setupSwagger(app, config);
+  setupWebsockets(app, config);
 }

@@ -1,5 +1,6 @@
 import { ErrorCodes, OrderBlockReason } from '@foodhubme/shared';
 import {
+  ConflictError,
   NotFoundError,
   ValidationError,
 } from '../../../common/errors/domain.error';
@@ -65,5 +66,16 @@ export class OrderNotFoundError extends NotFoundError {
 
   constructor(id: string) {
     super(`Заказ ${id} не найден`);
+  }
+}
+
+export class OrderStatusConflictError extends ConflictError {
+  readonly code = ErrorCodes.ORDER_STATUS_CONFLICT;
+
+  constructor(
+    public readonly from: string,
+    public readonly to: string,
+  ) {
+    super(`Заказ уже в статусе «${from}» — перевести его в «${to}» нельзя`);
   }
 }

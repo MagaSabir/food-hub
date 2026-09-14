@@ -6,6 +6,7 @@ import {
   PaymentMethod,
   PaymentStatus,
 } from '@foodhubme/shared';
+import { EventBus } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { OrderContext } from '../../domain/rules/order-calculation';
 import { OrderableItem } from '../../domain/rules/order-lines';
@@ -16,6 +17,7 @@ import {
   OrderWithDetails,
 } from '../../infrastructure/repositories/orders.repository';
 import { CreateOrderDto } from '../dto/create-order.application.dto';
+import { OrderCreatedEvent } from '../events/order-created.event';
 import { CreateOrderCommand, CreateOrderUseCase } from './create-order.usecase';
 
 const d = (v: string | number) => new Prisma.Decimal(v);
@@ -143,6 +145,7 @@ describe('CreateOrderUseCase', () => {
     findClient: jest.Mock;
     createOrder: jest.Mock;
   };
+  let events: { publish: jest.Mock };
   let usecase: CreateOrderUseCase;
 
   const context = (over: Partial<OrderContext> = {}): OrderContext => ({
@@ -169,7 +172,11 @@ describe('CreateOrderUseCase', () => {
           Promise.resolve(savedRow(order)),
         ),
     };
-    usecase = new CreateOrderUseCase(repo as unknown as OrdersRepository);
+    events = { publish: jest.fn() };
+    usecase = new CreateOrderUseCase(
+      repo as unknown as OrdersRepository,
+      events as unknown as EventBus,
+    );
   });
 
   afterEach(() => jest.useRealTimers());
@@ -365,5 +372,33 @@ describe('CreateOrderUseCase', () => {
     await run();
     expect(saved().userId).toBe(USER_ID);
     expect(repo.findClient).toHaveBeenCalledWith(USER_ID);
+  });
+
+  describe('живое уведомление ресторану (Шаг 5.2)', () => {
+    it('созданный заказ объявляется событием — с номером и точкой', async () => {
+      await run();
+
+      expect(events.publish).toHaveBeenCalledTimes(1);
+      const [[event]] = events.publish.mock.calls as [[OrderCreatedEvent]];
+
+      expect(event).toBeInstanceOf(OrderCreatedEvent);
+      expect(event.order).toEqual({
+        id: 'order-1',
+        orderNumber: 1043,
+        restaurantId: BRAND_ID,
+        branchId: 'b1',
+        createdAt: NOW_OPEN,
+      });
+    });
+
+    it('заказ не создан → никто ничего не объявляет', async () => {
+      repo.findOrderContext.mockResolvedValue(
+        context({ branches: [branch({ acceptingOrders: false })] }),
+      );
+
+      await failure();
+
+      expect(events.publish).not.toHaveBeenCalled();
+    });
   });
 });

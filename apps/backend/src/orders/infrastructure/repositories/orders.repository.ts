@@ -5,7 +5,9 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { VISIBLE_RESTAURANT } from '../../../restaurants/domain/rules/visible-restaurant';
 import { OrderContext } from '../../domain/rules/order-calculation';
 import { OrderLineSnapshot } from '../../domain/rules/order-lines';
+import { StaffScope } from '../../../auth/domain/rules/staff-scope';
 import { StatusActor } from '../../domain/rules/status-actor';
+import { staffScopeWhere } from './staff-scope.where';
 
 export const ORDER_CARD_INCLUDE = {
   restaurant: { select: { name: true } },
@@ -129,5 +131,90 @@ export class OrdersRepository {
         include: ORDER_CARD_INCLUDE,
       }),
     );
+  }
+  findForStatusChange(
+    scope: StaffScope,
+    orderId: string,
+  ): Promise<{ id: string; status: string; orderType: string } | null> {
+    return this.prisma.client.order.findFirst({
+      where: { id: orderId, ...staffScopeWhere(scope) },
+      select: { id: true, status: true, orderType: true },
+    });
+  }
+
+  findCardForStaff(
+    scope: StaffScope,
+    orderId: string,
+  ): Promise<OrderWithDetails | null> {
+    return this.prisma.client.order.findFirst({
+      where: { id: orderId, ...staffScopeWhere(scope) },
+      include: ORDER_CARD_INCLUDE,
+    });
+  }
+
+  changeStatus(input: StatusChange): Promise<OrderWithDetails | null> {
+    const now = new Date();
+
+    return this.prisma.runInTransaction(async () => {
+      const { count } = await this.prisma.client.order.updateMany({
+        where: {
+          id: input.orderId,
+          status: input.expectedFrom,
+          ...staffScopeWhere(input.scope),
+        },
+        data: {
+          status: input.status,
+          ...(input.prepMinutes === undefined
+            ? {}
+            : { prepMinutes: input.prepMinutes }),
+          ...(input.cancelReason === undefined
+            ? {}
+            : { cancelReason: input.cancelReason }),
+          ...lifecycleTimestamp(input.status, now),
+        },
+      });
+
+      if (count === 0) return null;
+
+      await this.prisma.client.orderStatusLog.create({
+        data: {
+          orderId: input.orderId,
+          status: input.status,
+          changedBy: input.changedBy,
+        },
+      });
+
+      return this.prisma.client.order.findUniqueOrThrow({
+        where: { id: input.orderId },
+        include: ORDER_CARD_INCLUDE,
+      });
+    });
+  }
+}
+
+export interface StatusChange {
+  orderId: string;
+  scope: StaffScope;
+  expectedFrom: OrderStatus;
+  status: OrderStatus;
+  changedBy: string;
+  prepMinutes?: number;
+  cancelReason?: string;
+}
+
+function lifecycleTimestamp(
+  status: OrderStatus,
+  now: Date,
+): Prisma.OrderUpdateInput {
+  switch (status) {
+    case OrderStatus.ACCEPTED:
+      return { acceptedAt: now };
+    case OrderStatus.READY:
+    case OrderStatus.ON_THE_WAY:
+      return { dispatchedAt: now };
+    case OrderStatus.COMPLETED:
+      return { completedAt: now };
+    default:
+      return {};
   }
 }
