@@ -10,7 +10,7 @@ describe('HealthService', () => {
         HealthService,
         {
           provide: PrismaService,
-          useValue: { $queryRaw: queryRaw },
+          useValue: { client: { $queryRaw: queryRaw } },
         },
         { provide: RedisService, useValue: { isAlive } },
       ],

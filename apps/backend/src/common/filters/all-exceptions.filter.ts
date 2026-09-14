@@ -8,17 +8,17 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { AppConfig } from '../../config';
 import {
+  ConflictError,
   DomainError,
   Extension,
-  ConflictError,
   ForbiddenError,
   NotFoundError,
   TooManyRequestsError,
   UnauthorizedError,
   ValidationError,
 } from '../errors/domain.error';
-import { AppConfig } from '../../config';
 
 export interface ErrorResponseBody {
   statusCode: number;
@@ -29,6 +29,7 @@ export interface ErrorResponseBody {
   path: string;
   timestamp: string;
 }
+
 type DomainErrorClass = abstract new (...args: never[]) => DomainError;
 
 const DOMAIN_ERROR_MAP: ReadonlyArray<{
@@ -42,13 +43,13 @@ const DOMAIN_ERROR_MAP: ReadonlyArray<{
     status: HttpStatus.BAD_REQUEST,
     error: 'Bad Request',
   },
+  { type: ConflictError, status: HttpStatus.CONFLICT, error: 'Conflict' },
   { type: ForbiddenError, status: HttpStatus.FORBIDDEN, error: 'Forbidden' },
   {
     type: UnauthorizedError,
     status: HttpStatus.UNAUTHORIZED,
     error: 'Unauthorized',
   },
-  { type: ConflictError, status: HttpStatus.CONFLICT, error: 'Conflict' },
   {
     type: TooManyRequestsError,
     status: HttpStatus.TOO_MANY_REQUESTS,
@@ -67,9 +68,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
 
-    let status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-    let error: string = 'Internal Server Error';
-    let message: string | string[] = 'Internal Server Error';
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let error = 'Internal Server Error';
+    let message: string | string[] = 'Internal server error';
     let code: string | undefined;
     let extensions: Extension[] | undefined;
 
@@ -82,7 +83,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (exception.extensions.length) extensions = exception.extensions;
     } else if (exception instanceof HttpException) {
       status = exception.getStatus();
-      const body = exception.getResponse();
+      const body: string | object = exception.getResponse();
       if (typeof body === 'string') {
         message = body;
         error = exception.name;
@@ -92,16 +93,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error = b.error ?? exception.name;
       }
     } else {
-      const app = this.config.getOrThrow<AppConfig>('app');
+      const app: AppConfig = this.config.getOrThrow<AppConfig>('app');
       if (app.sendInternalServerErrorDetails && exception instanceof Error) {
         message = exception.message;
       }
     }
-    const logPayload = JSON.stringify({
+
+    const logPayload: string = JSON.stringify({
       statusCode: status,
       code,
       method: req.method,
-      path: req.path,
+      path: req.url,
     });
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(
@@ -111,15 +113,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else {
       this.logger.warn(logPayload);
     }
+
     const responseBody: ErrorResponseBody = {
       statusCode: status,
       error,
       message,
       ...(code ? { code } : {}),
       ...(extensions ? { extensions } : {}),
-      path: req.path,
+      path: req.url,
       timestamp: new Date().toISOString(),
     };
-    res.status(status).send(responseBody);
+    res.status(status).json(responseBody);
   }
 }

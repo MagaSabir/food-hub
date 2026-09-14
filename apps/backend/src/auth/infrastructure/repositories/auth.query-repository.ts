@@ -9,7 +9,7 @@ export class AuthQueryRepository {
 
   async findMe(subjectId: string, role: Role): Promise<MeViewDto | null> {
     if (role === Role.PLATFORM_ADMIN) {
-      const admin = await this.prisma.platformAdmin.findFirst({
+      const admin = await this.prisma.client.platformAdmin.findFirst({
         where: { id: subjectId, isActive: true },
       });
 
@@ -17,14 +17,14 @@ export class AuthQueryRepository {
     }
 
     if (role === Role.CLIENT) {
-      const user = await this.prisma.user.findFirst({
+      const user = await this.prisma.client.user.findFirst({
         where: { id: subjectId, deletedAt: null },
       });
 
       return user ? MeViewDto.fromUser(user) : null;
     }
 
-    const staff = await this.prisma.staffUser.findFirst({
+    const staff = await this.prisma.client.staffUser.findFirst({
       where: { id: subjectId, isActive: true },
     });
 

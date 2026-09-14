@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import type { OtpChannelPreference } from '@foodhubme/shared';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Matches } from 'class-validator';
+import { IsIn, IsOptional, Matches } from 'class-validator';
 import { normalizePhone } from '../../domain/rules/phone';
 
 export class RequestOtpInputDto {
@@ -15,4 +16,16 @@ export class RequestOtpInputDto {
   )
   @Matches(/^\+7\d{10}$/, { message: 'Некорректный номер телефона' })
   phone!: string;
+
+  @ApiPropertyOptional({
+    enum: ['auto', 'sms'],
+    default: 'auto',
+    description:
+      'Чем прислать код. auto — решает сервер (сначала Telegram, дешевле). ' +
+      'sms — кнопка «Не пришёл код? Отправить по СМС»: человек уже сказал, ' +
+      'что первый канал ему не подошёл, и уговаривать его незачем.',
+  })
+  @IsOptional()
+  @IsIn(['auto', 'sms'], { message: 'channel: auto или sms' })
+  channel?: OtpChannelPreference;
 }

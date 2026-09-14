@@ -1,14 +1,13 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import request from 'supertest';
 import { AppModule } from '../app.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
-import { applyAppInitialization } from '../setup/apply-app-initialization';
+import { applyAppInitialization } from '../setup/app-initialization';
 import { AuthSubjectType } from './domain/types/auth-subject';
 import { OtpPolicy } from './domain/policies/otp.policy';
-import { OTP_SENDER } from './infrastructure/otp-sender/otp-sender.interface';
+import { OTP_CHANNELS } from './infrastructure/otp-sender/otp-sender.interface';
 import { SessionsRepository } from './infrastructure/repositories/sessions.repository';
 
 describe('Auth (e2e)', () => {
@@ -18,6 +17,8 @@ describe('Auth (e2e)', () => {
   let sessions: SessionsRepository;
 
   const sentCodes = new Map<string, string>();
+  const codesByPhone = new Map<string, string[]>();
+  const telegramTried: string[] = [];
   const usedPhones: string[] = [];
 
   const ADMIN = {
@@ -29,15 +30,26 @@ describe('Auth (e2e)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-      .overrideProvider(OTP_SENDER)
-      .useValue({
-        send: (phone: string, code: string): Promise<void> => {
-          sentCodes.set(phone, code);
-          return Promise.resolve();
+      .overrideProvider(OTP_CHANNELS)
+      .useValue([
+        {
+          name: 'telegram',
+          send: (phone: string): Promise<boolean> => {
+            telegramTried.push(phone);
+            return Promise.resolve(false);
+          },
         },
-      })
-      .overrideGuard(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
+        {
+          name: 'sms',
+          send: (phone: string, code: string): Promise<boolean> => {
+            sentCodes.set(phone, code);
+            (
+              codesByPhone.get(phone) ?? codesByPhone.set(phone, []).get(phone)!
+            ).push(code);
+            return Promise.resolve(true);
+          },
+        },
+      ])
       .compile();
 
     app = moduleRef.createNestApplication<NestExpressApplication>();
@@ -62,7 +74,7 @@ describe('Auth (e2e)', () => {
     if (usedPhones.length) {
       await redis.client.del(
         ...usedPhones.flatMap((phone) => [
-          `otp:code:${phone}`,
+          `otp:codes:${phone}`,
           `otp:cooldown:${phone}`,
           `otp:count:${phone}`,
           `otp:attempts:${phone}`,
@@ -95,10 +107,29 @@ describe('Auth (e2e)', () => {
     return phone;
   }
 
+  async function waitForCode(phone: string): Promise<string> {
+    for (let i = 0; i < 100; i++) {
+      const code = sentCodes.get(phone);
+      if (code) return code;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    throw new Error(`код на ${phone} не дошёл до канала за 5 секунд`);
+  }
+
+  async function waitFor(ready: () => boolean): Promise<void> {
+    for (let i = 0; i < 100; i++) {
+      if (ready()) return;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    throw new Error('условие не наступило за 5 секунд');
+  }
+
   async function loginClient(phone: string) {
     await api().post('/api/auth/phone/request').send({ phone }).expect(200);
 
-    const code = sentCodes.get(phone);
+    const code = await waitForCode(phone);
     const res = await api()
       .post('/api/auth/phone/verify')
       .send({ phone, code })
@@ -258,6 +289,74 @@ describe('Auth (e2e)', () => {
     });
   });
 
+  describe('PATCH /api/auth/me — имя в профиле (Шаг 7.1а)', () => {
+    it('гость без токена → 401', async () => {
+      await api().patch('/api/auth/me').send({ name: 'Магомед' }).expect(401);
+    });
+
+    it('админ платформы → 403: профиль есть только у клиента', async () => {
+      const admin = await api().post('/api/auth/login').send(ADMIN).expect(200);
+
+      const res = await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${admin.body.accessToken}`)
+        .send({ name: 'Магомед' })
+        .expect(403);
+
+      expect(res.body.code).toBe('ACCESS_DENIED');
+    });
+
+    it('сохраняет имя и сразу отдаёт обновлённый профиль', async () => {
+      const tokens = await loginClient(newPhone());
+
+      const res = await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: 'Магомед' })
+        .expect(200);
+
+      expect(res.body).toMatchObject({ name: 'Магомед', role: 'CLIENT' });
+
+      const me = await api()
+        .get('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .expect(200);
+      expect(me.body.name).toBe('Магомед');
+    });
+
+    it('пробелы по краям не считаются частью имени', async () => {
+      const tokens = await loginClient(newPhone());
+
+      const res = await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: '  Магомед  ' })
+        .expect(200);
+
+      expect(res.body.name).toBe('Магомед');
+    });
+
+    it('одни пробелы → 400 (обрезаем ДО проверки длины)', async () => {
+      const tokens = await loginClient(newPhone());
+
+      await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: '     ' })
+        .expect(400);
+    });
+
+    it('слишком длинное имя → 400', async () => {
+      const tokens = await loginClient(newPhone());
+
+      await api()
+        .patch('/api/auth/me')
+        .set('Authorization', `Bearer ${tokens.accessToken}`)
+        .send({ name: 'М'.repeat(51) })
+        .expect(400);
+    });
+  });
+
   describe('вход клиента по телефону', () => {
     it('запрос кода → подтверждение → токены и профиль', async () => {
       const phone = newPhone();
@@ -274,7 +373,7 @@ describe('Auth (e2e)', () => {
 
       const verified = await api()
         .post('/api/auth/phone/verify')
-        .send({ phone, code: sentCodes.get(phone) })
+        .send({ phone, code: await waitForCode(phone) })
         .expect(200);
 
       const me = await api()
@@ -306,7 +405,7 @@ describe('Auth (e2e)', () => {
     it('код одноразовый: повторный вход тем же кодом → 401', async () => {
       const phone = newPhone();
       await api().post('/api/auth/phone/request').send({ phone }).expect(200);
-      const code = sentCodes.get(phone);
+      const code = await waitForCode(phone);
 
       await api()
         .post('/api/auth/phone/verify')
@@ -319,6 +418,54 @@ describe('Auth (e2e)', () => {
         .expect(401);
 
       expect(res.body.code).toBe('INVALID_OTP');
+    });
+
+    it('auto: сначала пробуем Telegram, потом СМС', async () => {
+      const phone = newPhone();
+      await api().post('/api/auth/phone/request').send({ phone }).expect(200);
+      await waitForCode(phone);
+
+      expect(telegramTried).toContain(phone);
+    });
+
+    it('channel=sms: Telegram не трогаем вовсе', async () => {
+      const phone = newPhone();
+      await api()
+        .post('/api/auth/phone/request')
+        .send({ phone, channel: 'sms' })
+        .expect(200);
+      await waitForCode(phone);
+
+      expect(telegramTried).not.toContain(phone);
+    });
+
+    it('чужой канал в теле → 400', async () => {
+      await api()
+        .post('/api/auth/phone/request')
+        .send({ phone: newPhone(), channel: 'telegram' })
+        .expect(400);
+    });
+
+    it('после повторной отправки СТАРЫЙ код всё ещё подходит', async () => {
+      const phone = newPhone();
+      await api().post('/api/auth/phone/request').send({ phone }).expect(200);
+      const first = await waitForCode(phone);
+
+      await redis.client.del(`otp:cooldown:${phone}`);
+
+      await api()
+        .post('/api/auth/phone/request')
+        .send({ phone, channel: 'sms' })
+        .expect(200);
+      await waitFor(() => (codesByPhone.get(phone) ?? []).length >= 2);
+
+      const codes = codesByPhone.get(phone) ?? [];
+      expect(codes[1]).not.toBe(codes[0]);
+
+      await api()
+        .post('/api/auth/phone/verify')
+        .send({ phone, code: first })
+        .expect(200);
     });
 
     it('повторный запрос кода сразу → 429 с остатком времени', async () => {
@@ -337,7 +484,7 @@ describe('Auth (e2e)', () => {
     it('после исчерпания попыток код мёртв даже при верном вводе', async () => {
       const phone = newPhone();
       await api().post('/api/auth/phone/request').send({ phone }).expect(200);
-      const code = sentCodes.get(phone)!;
+      const code = await waitForCode(phone);
 
       for (let i = 0; i < OtpPolicy.MAX_ATTEMPTS; i++) {
         const res = await api()

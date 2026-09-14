@@ -1,6 +1,8 @@
 export const PasswordPolicy = {
   MEMORY_COST: 2 ** 16,
+
   TIME_COST: 3,
+
   PARALLELISM: 1,
 } as const;
 

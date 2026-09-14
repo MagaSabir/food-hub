@@ -1,7 +1,8 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/api/decorators/public.decorator';
 import { HealthResult, HealthService } from './health.service';
+import { ApiHealth } from './docs/health.docs';
 
 @Public()
 @ApiTags('health')
@@ -10,7 +11,7 @@ export class HealthController {
   constructor(private readonly health: HealthService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Проверка живости: статус приложения и БД' })
+  @ApiHealth()
   async check(): Promise<HealthResult> {
     const result = await this.health.check();
     if (result.status !== 'ok') {

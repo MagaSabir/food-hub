@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig, EnvironmentConfig } from './config';
+import { AppInfoViewDto } from './app.view-dto';
 
 @Injectable()
 export class AppService {
   constructor(private readonly config: ConfigService) {}
 
-  getInfo(): { name: string; env: string; status: string } {
+  getInfo(): AppInfoViewDto {
     const app = this.config.getOrThrow<AppConfig>('app');
     const { nodeEnv } =
       this.config.getOrThrow<EnvironmentConfig>('environment');

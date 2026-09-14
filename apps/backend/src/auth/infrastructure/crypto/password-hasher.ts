@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { hash, verify } from '@node-rs/argon2';
+import { Injectable } from '@nestjs/common';
 import { ARGON2_OPTIONS } from '../../domain/policies/password.policy';
 
 export const DUMMY_PASSWORD_HASH =

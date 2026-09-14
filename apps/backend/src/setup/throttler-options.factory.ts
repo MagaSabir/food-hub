@@ -15,5 +15,7 @@ export function buildThrottlerOptions(
   return {
     throttlers: [{ ttl: throttle.ttl * 1000, limit: throttle.limit }],
     storage: new ThrottlerStorageRedisService(redis.client),
+
+    skipIf: () => process.env.NODE_ENV === 'test',
   };
 }

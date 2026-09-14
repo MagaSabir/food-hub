@@ -10,6 +10,9 @@ describe('OtpRepository', () => {
     const chain = {
       set: (...args: unknown[]) => (calls.push(['set', ...args]), chain),
       del: (...args: unknown[]) => (calls.push(['del', ...args]), chain),
+      lpush: (...args: unknown[]) => (calls.push(['lpush', ...args]), chain),
+      ltrim: (...args: unknown[]) => (calls.push(['ltrim', ...args]), chain),
+      expire: (...args: unknown[]) => (calls.push(['expire', ...args]), chain),
       exec: jest.fn().mockResolvedValue([]),
     };
     const client = {
@@ -18,6 +21,7 @@ describe('OtpRepository', () => {
       incr: jest.fn().mockResolvedValue(1),
       expire: jest.fn().mockResolvedValue(1),
       get: jest.fn().mockResolvedValue(null),
+      lrange: jest.fn().mockResolvedValue([]),
       del: jest.fn().mockResolvedValue(1),
       set: jest.fn().mockResolvedValue('OK'),
       ...overrides,
@@ -110,26 +114,51 @@ describe('OtpRepository', () => {
     });
   });
 
-  describe('saveCode', () => {
-    it('кладёт хеш с TTL кода и обнуляет попытки', async () => {
+  describe('addCode', () => {
+    it('добавляет хеш к действующим, ставит TTL и обнуляет попытки', async () => {
       const { repo, calls } = build();
 
-      await repo.saveCode(PHONE, 'hashed');
+      await repo.addCode(PHONE, 'hashed');
 
       expect(calls).toEqual([
-        ['set', `otp:code:${PHONE}`, 'hashed', 'EX', OtpPolicy.TTL_SEC],
+        ['lpush', `otp:codes:${PHONE}`, 'hashed'],
+        ['ltrim', `otp:codes:${PHONE}`, 0, OtpPolicy.LIVE_CODES - 1],
+        ['expire', `otp:codes:${PHONE}`, OtpPolicy.TTL_SEC],
         ['del', `otp:attempts:${PHONE}`],
       ]);
+    });
+
+    it('ПРЕДЫДУЩИЙ код не стирает — он ещё может дойти', async () => {
+      const { repo, calls } = build();
+
+      await repo.addCode(PHONE, 'second');
+
+      expect(calls.some(([cmd]) => cmd === 'set')).toBe(false);
+      expect(
+        calls.some(
+          ([cmd, key]) => cmd === 'del' && key === `otp:codes:${PHONE}`,
+        ),
+      ).toBe(false);
     });
 
     it('кулдаун НЕ трогает — его занимает startCooldown до отправки', async () => {
       const { repo, calls } = build();
 
-      await repo.saveCode(PHONE, 'hashed');
+      await repo.addCode(PHONE, 'hashed');
 
       expect(calls.some(([, key]) => key === `otp:cooldown:${PHONE}`)).toBe(
         false,
       );
+    });
+  });
+
+  describe('findCodeHashes', () => {
+    it('отдаёт все действующие хеши, свежий первым', async () => {
+      const lrange = jest.fn().mockResolvedValue(['new', 'old']);
+      const { repo } = build({ lrange });
+
+      await expect(repo.findCodeHashes(PHONE)).resolves.toEqual(['new', 'old']);
+      expect(lrange).toHaveBeenCalledWith(`otp:codes:${PHONE}`, 0, -1);
     });
   });
 
@@ -147,14 +176,14 @@ describe('OtpRepository', () => {
   });
 
   describe('deleteCode', () => {
-    it('гасит и код, и счётчик попыток', async () => {
+    it('гасит ВСЕ действующие коды и счётчик попыток', async () => {
       const del = jest.fn().mockResolvedValue(2);
       const { repo } = build({ del });
 
       await repo.deleteCode(PHONE);
 
       expect(del).toHaveBeenCalledWith(
-        `otp:code:${PHONE}`,
+        `otp:codes:${PHONE}`,
         `otp:attempts:${PHONE}`,
       );
     });

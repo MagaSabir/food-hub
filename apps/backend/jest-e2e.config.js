@@ -4,11 +4,7 @@ module.exports = {
   rootDir: 'src',
   testRegex: '.*\\.e2e-spec\\.ts$',
   moduleFileExtensions: ['ts', 'js', 'json'],
-  collectCoverageFrom: [
-    '**/*.ts',
-    '!**/*.spec.ts',
-    '!**/*.int-spec.ts',
-    '!main.ts',
-  ],
-  coverageDirectory: '../coverage',
+  globalSetup: '<rootDir>/../e2e-global-setup.ts',
+  testTimeout: 60_000,
+  maxWorkers: 1,
 };

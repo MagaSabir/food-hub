@@ -1,22 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RestaurantListItem } from '@foodhubme/shared';
-import { Prisma } from '@prisma/client';
-
-export const CATALOG_SELECT = {
-  id: true,
-  name: true,
-  slug: true,
-  description: true,
-  logoUrl: true,
-  cuisineTypes: true,
-  ratingFood: true,
-  ratingDelivery: true,
-  reviewsCount: true,
-} satisfies Prisma.RestaurantSelect;
-
-type CatalogRow = Prisma.RestaurantGetPayload<{
-  select: typeof CATALOG_SELECT;
-}>;
+import type { Restaurant } from '@prisma/client';
+import type { RestaurantListItem } from '@foodhubme/shared';
+import type { DeliveryPromise } from '../../domain/rules/delivery-promise';
 
 export class RestaurantListItemViewDto implements RestaurantListItem {
   @ApiProperty({
@@ -44,6 +29,14 @@ export class RestaurantListItemViewDto implements RestaurantListItem {
   @ApiProperty({ nullable: true, type: String, example: null })
   logoUrl!: string | null;
 
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    example: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
+    description: 'Обложка карточки — первое фото; null, если фото не залиты',
+  })
+  coverUrl!: string | null;
+
   @ApiProperty({ type: [String], example: ['суши', 'роллы'] })
   cuisineTypes!: string[];
 
@@ -56,17 +49,71 @@ export class RestaurantListItemViewDto implements RestaurantListItem {
   @ApiProperty({ example: 0 })
   reviewsCount!: number;
 
-  static mapToView(r: CatalogRow): RestaurantListItemViewDto {
+  @ApiProperty({
+    example: true,
+    description:
+      'Открыт ли сейчас (открыта хотя бы одна точка). Считает backend.',
+  })
+  isOpen!: boolean;
+
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    example: 149,
+    description:
+      'Обещание витрины: минимальная база доставки по точкам, ₽. Точную цену ' +
+      'считает корзина по адресу. null — бренд не возит, только самовывоз.',
+  })
+  deliveryFeeFrom!: number | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    example: 1500,
+    description:
+      '«Бесплатно от N ₽» — минимальный порог среди точек; null — акции нет.',
+  })
+  freeDeliveryFrom!: number | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: Boolean,
+    example: true,
+    description:
+      'Возит ли бренд по выбранному адресу. null — адрес не передан. ' +
+      'false — сюда не возят, остаётся самовывоз (карточку не прячем).',
+  })
+  deliversToAddress!: boolean | null;
+
+  @ApiProperty({
+    nullable: true,
+    type: Number,
+    example: 2.4,
+    description:
+      'Расстояние до ближайшей точки, км (по прямой). null — адреса нет.',
+  })
+  distanceKm!: number | null;
+
+  static mapToView(
+    r: Restaurant,
+    computed: { isOpen: boolean } & DeliveryPromise,
+  ): RestaurantListItemViewDto {
     const dto = new RestaurantListItemViewDto();
     dto.id = r.id;
     dto.name = r.name;
     dto.slug = r.slug;
     dto.description = r.description;
     dto.logoUrl = r.logoUrl;
+    dto.coverUrl = r.photos[0] ?? null;
     dto.cuisineTypes = r.cuisineTypes;
     dto.ratingFood = r.ratingFood.toNumber();
     dto.ratingDelivery = r.ratingDelivery.toNumber();
     dto.reviewsCount = r.reviewsCount;
+    dto.isOpen = computed.isOpen;
+    dto.deliveryFeeFrom = computed.deliveryFeeFrom;
+    dto.freeDeliveryFrom = computed.freeDeliveryFrom;
+    dto.deliversToAddress = null;
+    dto.distanceKm = null;
     return dto;
   }
 }

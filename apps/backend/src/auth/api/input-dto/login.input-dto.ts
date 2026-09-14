@@ -1,4 +1,6 @@
+import { AuthScope } from '@foodhubme/shared';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -6,20 +8,18 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { AuthScope } from '@foodhubme/shared';
 
 export class LoginInputDto {
   @ApiProperty({ example: 'admin@foodhub.local' })
-  @IsEmail({}, { message: 'Некоректный емаил' })
+  @IsEmail({}, { message: 'Некорректный email' })
   @Transform(({ value }: { value: unknown }): unknown =>
-    typeof value === 'string' ? value.toLowerCase() : value,
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   email!: string;
 
-  @ApiProperty({ example: 'admin', minLength: 8 })
+  @ApiProperty({ example: 'Admin12345!', minLength: 8 })
   @IsString()
-  @MinLength(8)
+  @MinLength(8, { message: 'Пароль не короче 8 символов' })
   @MaxLength(128)
   password!: string;
 
