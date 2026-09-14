@@ -16,6 +16,7 @@ import { HealthModule } from './health/health.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
 import { MenuModule } from './menu/menu.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { OrdersModule } from './orders/orders.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenGuard } from './auth/api/guards/access-token.guard';
 import { RolesGuard } from './auth/api/guards/roles.guard';
@@ -51,6 +52,7 @@ const NODE_ENV = process.env.NODE_ENV ?? 'development';
     RestaurantsModule,
     MenuModule,
     FavoritesModule,
+    OrdersModule,
     AuthModule,
   ],
   controllers: [AppController],

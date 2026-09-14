@@ -4,7 +4,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import type { PlatformAdmin, StaffUser, User } from '@prisma/client';
 
 export class MeViewDto implements AuthMe {
-  @ApiProperty({ format: 'uuid' })
+  @ApiProperty({
+    format: 'uuid',
+    example: '44444444-0000-0000-0000-000000000001',
+  })
   id!: string;
 
   @ApiProperty({ enum: Role, example: Role.RESTAURANT_OWNER })
