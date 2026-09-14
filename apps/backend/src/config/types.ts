@@ -14,24 +14,9 @@ export interface EnvironmentConfig {
   isProduction: boolean;
 }
 
-export interface SwaggerConfig {
-  enabled: boolean;
-  path: string;
-}
-
-export interface DatabaseConfig {
-  url: string;
-  logQueries: boolean;
-}
-
-export interface RedisConfig {
-  url: string;
-}
-export interface AuthConfig {
-  accessSecret: string;
-  accessExpiresIn: string;
-  refreshSecret: string;
-  refreshExpiresIn: string;
+export interface CorsConfig {
+  origin: boolean | string[];
+  credentials: boolean;
 }
 
 export interface CookieConfig {
@@ -42,7 +27,28 @@ export interface CookieConfig {
   maxAge: number;
 }
 
+export interface SwaggerConfig {
+  enabled: boolean;
+  path: string;
+}
+
 export interface ThrottleConfig {
   ttl: number;
   limit: number;
+}
+
+export interface DatabaseConfig {
+  url: string;
+  logQueries: boolean;
+}
+
+export interface AuthConfig {
+  accessSecret: string;
+  accessExpiresIn: string;
+  refreshSecret: string;
+  refreshExpiresIn: string;
+}
+
+export interface RedisConfig {
+  url: string;
 }

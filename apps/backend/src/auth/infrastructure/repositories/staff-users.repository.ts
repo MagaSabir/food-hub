@@ -7,13 +7,13 @@ export class StaffUsersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   findActiveByEmail(email: string): Promise<StaffUser | null> {
-    return this.prisma.staffUser.findFirst({
+    return this.prisma.client.staffUser.findFirst({
       where: { email, isActive: true },
     });
   }
 
   findActiveById(id: string): Promise<StaffUser | null> {
-    return this.prisma.staffUser.findFirst({
+    return this.prisma.client.staffUser.findFirst({
       where: { id, isActive: true },
     });
   }

@@ -1,4 +1,5 @@
 import { config as loadEnv } from 'dotenv';
+
 const NODE_ENV = process.env.NODE_ENV ?? 'development';
 loadEnv({ path: `env/.env.${NODE_ENV}` });
 loadEnv({ path: 'env/.env' });
@@ -8,6 +9,7 @@ import { ARGON2_OPTIONS } from '../src/auth/domain/policies/password.policy';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Role } from '@prisma/client';
 import { Pool } from 'pg';
+import { seedMenu } from './seed-menu';
 
 const everyDay = { from: '10:00', to: '22:00' };
 const workingHours = {
@@ -19,6 +21,7 @@ const workingHours = {
   sat: [everyDay],
   sun: [everyDay],
 };
+
 const shortDay = { from: '09:00', to: '18:00' };
 const earlyClosing = {
   mon: [shortDay],
@@ -32,24 +35,14 @@ const earlyClosing = {
 
 const CITY_ID = '11111111-1111-1111-1111-111111111111';
 
-/**
- * Форма демо-точки. Тип нужен не для красоты: без него TypeScript выводит
- * из массива ОБЪЕДИНЕНИЕ разных литералов, и обращение к необязательному
- * полю (`b.hasPickup`) — ошибка, потому что оно есть не у всех. С типом
- * необязательные поля становятся законными, а забытое обязательное ловится
- * сразу. (Файл вне tsconfig — он в prisma/, а не src/ — так что проверять
- * его надо отдельным вызовом tsc.)
- */
 interface SeedBranch {
   id: string;
-  /** null — точка у бренда одна, имя подставится от бренда. */
   name: string | null;
   address: string;
   latitude: number;
   longitude: number;
   deliveryBaseFee: number;
   deliveryPerKm: number;
-  /** Ниже — отличия от общего правила; не задано → умолчание. */
   workingHours?: typeof workingHours;
   hasDelivery?: boolean;
   hasPickup?: boolean;
@@ -62,18 +55,16 @@ interface SeedRestaurant {
   slug: string;
   description: string;
   cuisineTypes: string[];
-  logoUrl: string;
   ratingFood: number;
   ratingDelivery: number;
   reviewsCount: number;
   branches: SeedBranch[];
 }
+
 const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000001',
     name: 'Сыроварня',
-    logoUrl:
-      'https://api.dicebear.com/9.x/icons/png?seed=syrovarnya&icon=award&backgroundColor=c62828&radius=20&size=256',
     slug: 'syrovarnya',
     description: 'Итальянская кухня и пицца на дровах',
     cuisineTypes: ['Итальянская', 'Пицца', 'Паста'],
@@ -87,7 +78,6 @@ const RESTAURANTS: SeedRestaurant[] = [
         address: 'пр. В. Путина, 1',
         latitude: 43.3178,
         longitude: 45.6949,
-        // «Бесплатная доставка» (base 0, per_km 0)
         deliveryBaseFee: 0,
         deliveryPerKm: 0,
       },
@@ -99,8 +89,6 @@ const RESTAURANTS: SeedRestaurant[] = [
         longitude: 45.689,
         deliveryBaseFee: 0,
         deliveryPerKm: 0,
-        // Не возит: кухня в фуд-корте, курьеров нет. Заказ на доставку сюда
-        // не попадёт — сервер выберет другую точку бренда.
         hasDelivery: false,
       },
       {
@@ -111,8 +99,6 @@ const RESTAURANTS: SeedRestaurant[] = [
         longitude: 45.7,
         deliveryBaseFee: 149,
         deliveryPerKm: 20,
-        // Закрывается в 18:00 и не имеет зала — на ней видно и «закрыто»,
-        // и то, что список точек зависит от выбранного типа заказа.
         workingHours: earlyClosing,
         hasDineIn: false,
       },
@@ -121,8 +107,6 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000002',
     name: 'Tokyo Sushi',
-    logoUrl:
-      'https://api.dicebear.com/9.x/icons/png?seed=tokyo-sushi&icon=moonStars&backgroundColor=283593&radius=20&size=256',
     slug: 'tokyo-sushi',
     description: 'Суши и роллы, японская кухня',
     cuisineTypes: ['Суши', 'Роллы', 'Японская'],
@@ -153,8 +137,6 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000003',
     name: 'Black Star Burger',
-    logoUrl:
-      'https://api.dicebear.com/9.x/icons/png?seed=black-star-burger&icon=star&backgroundColor=111827&radius=20&size=256',
     slug: 'black-star-burger',
     description: 'Бургеры и американская кухня',
     cuisineTypes: ['Бургеры', 'Американская'],
@@ -176,8 +158,6 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000004',
     name: 'Урарту',
-    logoUrl:
-      'https://api.dicebear.com/9.x/icons/png?seed=urartu&icon=gem&backgroundColor=b45309&radius=20&size=256',
     slug: 'urartu',
     description: 'Кавказская кухня, шашлык на углях',
     cuisineTypes: ['Кавказская', 'Шашлык'],
@@ -199,8 +179,6 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-0000-0000-0000-000000000005',
     name: 'Утро',
-    logoUrl:
-      'https://api.dicebear.com/9.x/icons/png?seed=utro&icon=sun&backgroundColor=f59e0b&radius=20&size=256',
     slug: 'utro',
     description: 'Завтраки, кофе и выпечка весь день',
     cuisineTypes: ['Завтраки', 'Кофе', 'Выпечка'],
@@ -222,8 +200,6 @@ const RESTAURANTS: SeedRestaurant[] = [
   {
     id: '22222222-2222-2222-2222-222222222222',
     name: 'Васаби',
-    logoUrl:
-      'https://api.dicebear.com/9.x/icons/png?seed=vasabi&icon=flower2&backgroundColor=4caf50&radius=20&size=256',
     slug: 'vasabi',
     description: 'Суши и роллы с доставкой по Грозному',
     cuisineTypes: ['Суши', 'Роллы'],
@@ -244,16 +220,12 @@ const RESTAURANTS: SeedRestaurant[] = [
   },
 ];
 
-// ── Тестовые аккаунты входа (Шаг 2.0) ───────────────────────────────────
-// ТОЛЬКО для локальной разработки: через них проверяем вход в админки на
-// шагах 2.1-2.3, пока нет UI создания сотрудников (он на Этапе 9).
 const PLATFORM_ADMIN = {
   id: '44444444-0000-0000-0000-000000000001',
   email: 'admin@foodhub.local',
   password: 'Admin12345!',
 };
 
-// Владелец «Сыроварни»: branchId = null → доступ ко ВСЕМ точкам своего бренда.
 const RESTAURANT_STAFF = {
   id: '55555555-0000-0000-0000-000000000001',
   email: 'owner@syrovarnya.local',
@@ -263,7 +235,6 @@ const RESTAURANT_STAFF = {
 };
 
 async function main(): Promise<void> {
-  // Сид создаёт аккаунты с известными паролями — в проде это дыра.
   if (process.env.NODE_ENV === 'production') {
     throw new Error('Сид запрещён в production (создаёт тестовые аккаунты)');
   }
@@ -284,7 +255,6 @@ async function main(): Promise<void> {
         slug: r.slug,
         description: r.description,
         cuisineTypes: r.cuisineTypes,
-        logoUrl: r.logoUrl,
         ratingFood: r.ratingFood,
         ratingDelivery: r.ratingDelivery,
         reviewsCount: r.reviewsCount,
@@ -323,6 +293,7 @@ async function main(): Promise<void> {
       }
     }
 
+    const menuItems = await seedMenu(prisma, RESTAURANTS);
 
     const adminHash = await hash(PLATFORM_ADMIN.password, ARGON2_OPTIONS);
     await prisma.platformAdmin.upsert({
@@ -349,7 +320,16 @@ async function main(): Promise<void> {
       create: { id: RESTAURANT_STAFF.id, ...staff },
     });
 
-
+    console.log(
+      `Сид готов: город ${city.name}, брендов: ${RESTAURANTS.length}, позиций меню: ${menuItems}`,
+    );
+    for (const r of RESTAURANTS) {
+      const points =
+        r.branches.length > 1 ? `, точек: ${r.branches.length}` : '';
+      console.log(
+        `  • ${r.name} — ${r.cuisineTypes.join(' · ')} (★ ${r.ratingFood})${points}`,
+      );
+    }
     console.log('Тестовые аккаунты (только dev):');
     console.log(
       `  • PLATFORM_ADMIN    ${PLATFORM_ADMIN.email} / ${PLATFORM_ADMIN.password}`,

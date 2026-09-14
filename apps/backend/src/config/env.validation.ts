@@ -2,36 +2,21 @@ import * as Joi from 'joi';
 
 const bool = () => Joi.boolean().truthy('true').falsy('false');
 
-export const envValidationSchema = Joi.object().keys({
-  // - App -
-  NODE_ENV: Joi.string()
-    .valid('development', 'test', 'production')
-    .default('development'),
-  APP_NAME: Joi.string().default('foodhubme'),
-  PORT: Joi.number().port().default(3000),
-  GLOBAL_PREFIX: Joi.string().default('api'),
-  SEND_INTERNAL_SERVER_ERROR_DETAILS: bool().default(false),
-
-  // - Swagger -
-  SWAGGER_ENABLED: bool(),
-  SWAGGER_PATH: Joi.string().default('api/docs'),
-
-  // - Database -
+export const envValidationSchema = Joi.object({
   DATABASE_URL: Joi.string()
     .uri({ scheme: ['postgres', 'postgresql'] })
     .required(),
   LOG_QUERIES: bool().default(false),
 
-  // - Redis -
   REDIS_URL: Joi.string()
-    .uri({ scheme: ['redis', 'redis'] })
+    .uri({ scheme: ['redis', 'rediss'] })
     .required(),
 
-  // - JWT -
   JWT_ACCESS_SECRET: Joi.string().min(32).required(),
   JWT_ACCESS_EXPIRES_IN: Joi.string()
     .pattern(/^\d+[smhd]$/)
     .default('15m'),
+
   JWT_REFRESH_SECRET: Joi.string()
     .min(32)
     .required()
@@ -39,7 +24,18 @@ export const envValidationSchema = Joi.object().keys({
   JWT_REFRESH_EXPIRES_IN: Joi.string()
     .pattern(/^\d+[smhd]$/)
     .default('30d'),
-  // - Cookie -
+
+  NODE_ENV: Joi.string()
+    .valid('development', 'test', 'production')
+    .default('development'),
+  APP_NAME: Joi.string().default('foodhub'),
+  PORT: Joi.number().port().default(3000),
+  GLOBAL_PREFIX: Joi.string().default('api'),
+  SEND_INTERNAL_SERVER_ERROR_DETAILS: bool().default(false),
+
+  CORS_ORIGIN: Joi.string().allow('').default('*'),
+  CORS_CREDENTIALS: bool().default(true),
+
   COOKIE_SECRET: Joi.string().when('NODE_ENV', {
     is: 'production',
     then: Joi.string().min(1).required(),
@@ -50,7 +46,14 @@ export const envValidationSchema = Joi.object().keys({
   COOKIE_SAME_SITE: Joi.string().valid('lax', 'strict', 'none').default('lax'),
   COOKIE_MAX_AGE: Joi.number().default(2592000000),
 
-  // - Throttle -
+  SWAGGER_ENABLED: bool(),
+  SWAGGER_PATH: Joi.string().default('api/docs'),
+
   THROTTLE_TTL: Joi.number().default(60),
   THROTTLE_LIMIT: Joi.number().default(100),
 });
+
+export const envValidationOptions = {
+  abortEarly: false,
+  allowUnknown: true,
+};

@@ -11,21 +11,20 @@ describe('PasswordHasher', () => {
     expect(hash).not.toContain('Admin12345!');
   });
 
-  it('один пароль дает разные хеши (случайная соль внутри)', async () => {
+  it('один пароль даёт РАЗНЫЕ хеши (случайная соль внутри)', async () => {
     const first = await hasher.hash('Admin12345!');
     const second = await hasher.hash('Admin12345!');
 
     expect(first).not.toBe(second);
-
     await expect(hasher.verify(first, 'Admin12345!')).resolves.toBe(true);
     await expect(hasher.verify(second, 'Admin12345!')).resolves.toBe(true);
   });
 
-  it('verify: неверный пароль -> false', async () => {
+  it('verify: неверный пароль → false', async () => {
     const hash = await hasher.hash('Admin12345!');
 
-    await expect(hasher.verify(hash, 'Admin123456!')).resolves.toBe(false);
-    await expect(hasher.verify(hash, 'Admin12345!')).resolves.toBe(true);
+    await expect(hasher.verify(hash, 'admin12345!')).resolves.toBe(false);
+    await expect(hasher.verify(hash, 'что-то другое')).resolves.toBe(false);
   });
 
   it('verify: битый хеш → false, а не исключение', async () => {

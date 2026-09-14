@@ -1,9 +1,10 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Extension, InputValidationError } from '../common/errors/domain.error';
 import { ValidationError as ClassValidatorError } from 'class-validator';
+import { Extension, InputValidationError } from '../common/errors/domain.error';
 
 export function errorFormatter(errors: ClassValidatorError[]): Extension[] {
   const result: Extension[] = [];
+
   for (const error of errors) {
     if (error.constraints) {
       for (const message of Object.values(error.constraints)) {
@@ -14,19 +15,20 @@ export function errorFormatter(errors: ClassValidatorError[]): Extension[] {
       result.push(...errorFormatter(error.children));
     }
   }
+
   return result;
 }
 
-export function setupPipes(app: INestApplication) {
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      stopAtFirstError: true,
-      forbidNonWhitelisted: true,
-      transformOptions: { enableImplicitConversion: true },
-      exceptionFactory: (errors: ClassValidatorError[]) =>
-        new InputValidationError(errorFormatter(errors)),
-    }),
-  );
+export const VALIDATION_PIPE_OPTIONS = {
+  whitelist: true,
+  transform: true,
+  stopAtFirstError: true,
+  forbidNonWhitelisted: false,
+  transformOptions: { enableImplicitConversion: true },
+  exceptionFactory: (errors: ClassValidatorError[]) =>
+    new InputValidationError(errorFormatter(errors)),
+} as const;
+
+export function setupPipes(app: INestApplication): void {
+  app.useGlobalPipes(new ValidationPipe(VALIDATION_PIPE_OPTIONS));
 }

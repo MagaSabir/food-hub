@@ -1,6 +1,5 @@
 import { registerAs } from '@nestjs/config';
 import { EnvironmentConfig, NodeEnv } from './types';
-import * as process from 'node:process';
 
 export const environmentConfig = registerAs(
   'environment',

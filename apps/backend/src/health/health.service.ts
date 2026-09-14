@@ -33,7 +33,7 @@ export class HealthService {
 
   private async checkDb(): Promise<'up' | 'down'> {
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
+      await this.prisma.client.$queryRaw`SELECT 1`;
       return 'up';
     } catch (e) {
       this.logger.error('Health: БД недоступна', (e as Error).stack);

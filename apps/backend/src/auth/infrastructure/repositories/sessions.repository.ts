@@ -1,6 +1,6 @@
+import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { RedisService } from '../../../redis/redis.service';
-import { createHash } from 'node:crypto';
 import { AuthSubjectType } from '../../domain/types/auth-subject';
 
 export enum SessionState {
@@ -60,6 +60,7 @@ export class SessionsRepository {
     const stored = await this.redis.client.get(
       this.sessionKey(type, subjectId, sessionId),
     );
+
     if (stored === null) return SessionState.MISSING;
 
     return stored === this.hash(refreshToken)

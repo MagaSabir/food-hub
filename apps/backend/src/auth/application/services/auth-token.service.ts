@@ -1,15 +1,15 @@
+import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import {
   ACCESS_JWT_SERVICE,
   REFRESH_JWT_SERVICE,
 } from '../../constants/auth.constants';
-import { JwtService } from '@nestjs/jwt';
 import { AccessTokenPayload } from '../../domain/types/access-token-payload';
 import {
   RefreshTokenPayload,
   SignedRefreshTokenPayload,
 } from '../../domain/types/refresh-token-payload';
-import { randomUUID } from 'node:crypto';
 
 @Injectable()
 export class AuthTokenService {

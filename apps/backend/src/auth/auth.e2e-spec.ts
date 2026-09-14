@@ -5,7 +5,7 @@ import request from 'supertest';
 import { AppModule } from '../app.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
-import { applyAppInitialization } from '../setup/apply-app-initialization';
+import { applyAppInitialization } from '../setup/app-initialization';
 import { AuthSubjectType } from './domain/types/auth-subject';
 import { OtpPolicy } from './domain/policies/otp.policy';
 import { OTP_SENDER } from './infrastructure/otp-sender/otp-sender.interface';

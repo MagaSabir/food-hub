@@ -13,17 +13,17 @@ model City {
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  branches  Branch[]
+
+  branches Branch[]
 
   @@map("cities")
 }
 
 model Restaurant {
-  id          String  @id @default(uuid()) @db.Uuid
-  name        String
-  description String?
-  logoUrl     String? @map("logo_url")
-
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  description   String?
+  logoUrl       String?  @map("logo_url")
   cuisineTypes  String[] @map("cuisine_types")
   slug          String   @unique
   showInCatalog Boolean  @default(true) @map("show_in_catalog")
@@ -32,13 +32,16 @@ model Restaurant {
   ratingDelivery Decimal @default(0) @map("rating_delivery") @db.Decimal(3, 2)
   reviewsCount   Int     @default(0) @map("reviews_count")
 
-  commissionPercent Decimal @default(0) @map("commission_percent") @db.Decimal(5, 2)
+  commissionPercent Decimal  @default(0) @map("commission_percent") @db.Decimal(5, 2)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
-  isActive   Boolean     @default(true) @map("is_active")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
-  branches   Branch[]
-  staffUsers StaffUser[]
+  branches       Branch[]
+  staffUsers     StaffUser[]
+  menuCategories MenuCategory[]
+  menuItems      MenuItem[]
+  favorites      UserFavorite[]
 
   @@map("restaurants")
 }
@@ -51,7 +54,6 @@ model Branch {
   address      String
   phone        String
 
-  // координаты
   latitude  Float?
   longitude Float?
 
@@ -62,16 +64,13 @@ model Branch {
 
   minOrderAmount Decimal @default(0) @map("min_order_amount") @db.Decimal(10, 2)
 
-  // доставка
   deliveryBaseFee          Decimal  @default(0) @map("delivery_base_fee") @db.Decimal(10, 2)
   deliveryIncludedRadiusKm Decimal  @default(0) @map("delivery_included_radius_km") @db.Decimal(5, 2)
   deliveryPerKm            Decimal  @default(0) @map("delivery_per_km") @db.Decimal(10, 2)
   deliveryMaxRadiusKm      Decimal? @map("delivery_max_radius_km") @db.Decimal(5, 2)
   freeDeliveryMinOrder     Decimal? @map("free_delivery_min_order") @db.Decimal(10, 2)
+  freeDeliveryRadiusKm     Decimal? @map("free_delivery_radius_km") @db.Decimal(5, 2)
 
-  freeDeliveryRadiusKm Decimal? @map("free_delivery_radius_km") @db.Decimal(5, 2)
-
-  // состояние
   acceptingOrders Boolean  @default(true) @map("accepting_orders")
   isActive        Boolean  @default(true) @map("is_active")
   createdAt       DateTime @default(now()) @map("created_at")
@@ -86,7 +85,101 @@ model Branch {
   @@map("branches")
 }
 
-// Auth
+enum ItemType {
+  DISH
+  DRINK
+}
+
+enum ModifierType {
+  SINGLE
+  MULTIPLE
+}
+
+model MenuCategory {
+  id           String @id @default(uuid()) @db.Uuid
+  restaurantId String @map("restaurant_id") @db.Uuid
+
+  name      String
+  sortOrder Int     @default(0) @map("sort_order")
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  items      MenuItem[]
+
+  @@unique([restaurantId, name])
+  @@unique([id, restaurantId])
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  restaurantId String   @map("restaurant_id") @db.Uuid
+  categoryId   String   @map("category_id") @db.Uuid
+  itemType     ItemType @default(DISH) @map("item_type")
+
+  name        String
+  description String?
+  composition String?
+  weight      String?
+  volume      String?
+  calories    Int?
+
+  price         Decimal   @db.Decimal(10, 2)
+  discountPrice Decimal?  @map("discount_price") @db.Decimal(10, 2)
+  discountUntil DateTime? @map("discount_until")
+
+  photos      String[]
+  isAvailable Boolean  @default(true) @map("is_available")
+  sortOrder   Int      @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  restaurant Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   MenuCategory @relation(fields: [categoryId, restaurantId], references: [id, restaurantId], onDelete: Restrict)
+
+  modifierGroups ModifierGroup[]
+
+  @@index([categoryId, sortOrder])
+  @@index([restaurantId])
+  @@map("menu_items")
+}
+
+model ModifierGroup {
+  id         String @id @default(uuid()) @db.Uuid
+  menuItemId String @map("menu_item_id") @db.Uuid
+
+  name          String
+  type          ModifierType
+  isRequired    Boolean      @default(false) @map("is_required")
+  minSelections Int          @default(0) @map("min_selections")
+  maxSelections Int?         @map("max_selections")
+  sortOrder     Int          @default(0) @map("sort_order")
+
+  menuItem MenuItem         @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  options  ModifierOption[]
+
+  @@index([menuItemId, sortOrder])
+  @@map("modifier_groups")
+}
+
+model ModifierOption {
+  id              String @id @default(uuid()) @db.Uuid
+  modifierGroupId String @map("modifier_group_id") @db.Uuid
+
+  name        String
+  priceDelta  Decimal @default(0) @map("price_delta") @db.Decimal(10, 2)
+  isAvailable Boolean @default(true) @map("is_available")
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  group ModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
+
+  @@index([modifierGroupId, sortOrder])
+  @@map("modifier_options")
+}
 
 enum Role {
   CLIENT
@@ -96,24 +189,45 @@ enum Role {
 }
 
 model User {
-  id        String    @id @default(uuid()) @db.Uuid
-  phone     String    @unique
-  name      String?
-  deletedAt DateTime? @map("deleted_at")
-  createdAt DateTime  @default(now()) @map("created_at")
+  id String @id @default(uuid()) @db.Uuid
 
-  devices UserDevice[]
+  phone String  @unique
+  name  String?
+
+  deletedAt DateTime? @map("deleted_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  devices   UserDevice[]
+  favorites UserFavorite[]
 
   @@map("users")
 }
 
+model UserFavorite {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  restaurantId String   @map("restaurant_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, restaurantId])
+  @@index([restaurantId])
+  @@map("user_favorites")
+}
+
 model UserDevice {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  expoPushToken String   @map("expo_push_token")
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  expoPushToken String  @map("expo_push_token")
   platform      String?
-  lastActiveAt  DateTime @default(now()) @map("last_active_at")
-  createdAt     DateTime @default(now()) @map("created_at")
+
+  lastActiveAt DateTime @default(now()) @map("last_active_at")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -123,19 +237,20 @@ model UserDevice {
 }
 
 model StaffUser {
-  id           String   @id @default(uuid()) @db.Uuid
-  restaurantId String   @map("restaurant_id") @db.Uuid
-  branchId     String?  @map("branch_id") @db.Uuid
-  email        String   @unique
-  passwordHash String   @map("password_hash")
+  id           String  @id @default(uuid()) @db.Uuid
+  restaurantId String  @map("restaurant_id") @db.Uuid
+  branchId     String? @map("branch_id") @db.Uuid
+
+  email        String @unique
+  passwordHash String @map("password_hash")
   role         Role
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-
-  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  branch     Branch?    @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
   @@index([restaurantId])
   @@index([branchId])

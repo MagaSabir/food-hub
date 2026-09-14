@@ -1,10 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
-import { GetRestaurantsQuery } from '../application/queries/get-restaurants.query';
-import { ApiGetRestaurants } from './docs/get-restaurants.docs';
 import { ApiTags } from '@nestjs/swagger';
-import { RestaurantListItemViewDto } from './view-dto/restaurant-list-item.view-dto';
 import { Public } from '../../auth/api/decorators/public.decorator';
+import { GetRestaurantsQuery } from '../application/queries/get-restaurants.query';
+import { GetRestaurantBySlugQuery } from '../application/queries/get-restaurant-by-slug.query';
+import { CatalogQueryInputDto } from './input-dto/catalog-query.input-dto';
+import { RestaurantListItemViewDto } from './view-dto/restaurant-list-item.view-dto';
+import { RestaurantDetailsViewDto } from './view-dto/restaurant-details.view-dto';
+import { ApiGetRestaurants } from './docs/get-restaurants.docs';
+import { ApiGetRestaurantBySlug } from './docs/get-restaurant-by-slug.docs';
 
 @ApiTags('restaurants')
 @Controller('restaurants')
@@ -14,7 +18,16 @@ export class RestaurantsController {
   @Public()
   @Get()
   @ApiGetRestaurants()
-  getRestaurants(): Promise<RestaurantListItemViewDto[]> {
-    return this.queryBus.execute(new GetRestaurantsQuery());
+  list(
+    @Query() query: CatalogQueryInputDto,
+  ): Promise<RestaurantListItemViewDto[]> {
+    return this.queryBus.execute(new GetRestaurantsQuery(query));
+  }
+
+  @Public()
+  @Get('by-slug/:slug')
+  @ApiGetRestaurantBySlug()
+  bySlug(@Param('slug') slug: string): Promise<RestaurantDetailsViewDto> {
+    return this.queryBus.execute(new GetRestaurantBySlugQuery(slug));
   }
 }

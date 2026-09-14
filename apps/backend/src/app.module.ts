@@ -1,23 +1,30 @@
 import { Module } from '@nestjs/common';
-import { AppService } from './app.service';
-import { AppController } from './app.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { configLoaders, ThrottleConfig } from './config';
-import { envValidationSchema } from './config/env.validation';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import {
+  configLoaders,
+  envValidationSchema,
+  envValidationOptions,
+  ThrottleConfig,
+} from './config';
 import { PrismaModule } from './prisma/prisma.module';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { RedisModule } from './redis/redis.module';
+import { RedisService } from './redis/redis.service';
+import { buildThrottlerOptions } from './setup/throttler-options.factory';
 import { HealthModule } from './health/health.module';
 import { RestaurantsModule } from './restaurants/restaurants.module';
+import { MenuModule } from './menu/menu.module';
+import { FavoritesModule } from './favorites/favorites.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessTokenGuard } from './auth/api/guards/access-token.guard';
 import { RolesGuard } from './auth/api/guards/roles.guard';
-import { RedisModule } from './redis/redis.module';
-import { RedisService } from './redis/redis.service';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { buildThrottlerOptions } from './setup/throttler-options.factory';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
-const NODE_ENV = process.env.NODE_ENV || 'development';
+const NODE_ENV = process.env.NODE_ENV ?? 'development';
 
 @Module({
   imports: [
@@ -26,6 +33,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
       cache: true,
       load: configLoaders,
       validationSchema: envValidationSchema,
+      validationOptions: envValidationOptions,
       envFilePath: [`env/.env.${NODE_ENV}`, 'env/.env'],
     }),
     PrismaModule,
@@ -41,6 +49,8 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
     HealthModule,
     RestaurantsModule,
+    MenuModule,
+    FavoritesModule,
     AuthModule,
   ],
   controllers: [AppController],
@@ -50,6 +60,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
     { provide: APP_GUARD, useExisting: AccessTokenGuard },
     { provide: APP_GUARD, useExisting: RolesGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
   ],
 })
 export class AppModule {}
